@@ -148,6 +148,70 @@ pub trait PlgVectorOps: Sized {
     }
 }
 
+/// Marker trait for C-compatible enums with a specific integer representation
+///
+/// # Safety
+///
+/// Implementors must guarantee that:
+/// - The type has `#[repr(IntType)]` where IntType is the associated `ReprInt` type
+/// - The type has the exact same memory layout as `ReprInt`
+/// - All bit patterns valid for `ReprInt` represent valid enum values (or you handle invalid values safely)
+pub unsafe trait CEnumRepr: Sized + Copy {
+    /// The underlying integer type (i8, i16, i32, i64, u8, u16, u32, u64)
+    type ReprInt: PlgVectorOps + Copy;
+}
+
+/// Automatic implementation of PlgVectorOps for enums that implement CEnumRepr
+impl<E: CEnumRepr> PlgVectorOps for E {
+    fn construct(data: &[Self]) -> PlgVector<Self> {
+        unsafe {
+            // Cast enum slice to integer slice
+            let int_data = std::slice::from_raw_parts(
+                data.as_ptr() as *const E::ReprInt,
+                data.len()
+            );
+            // Construct vector using integer type's implementation
+            let int_vec = E::ReprInt::construct(int_data);
+            // Transmute the PlgVector<ReprInt> to PlgVector<E>
+            std::mem::transmute(int_vec)
+        }
+    }
+
+    fn destroy(vec: &mut PlgVector<Self>) {
+        unsafe {
+            // Cast to PlgVector<ReprInt> and destroy
+            let int_vec: &mut PlgVector<E::ReprInt> = std::mem::transmute(vec);
+            E::ReprInt::destroy(int_vec);
+        }
+    }
+
+    fn len(vec: &PlgVector<Self>) -> usize {
+        unsafe {
+            let int_vec: &PlgVector<E::ReprInt> = std::mem::transmute(vec);
+            E::ReprInt::len(int_vec)
+        }
+    }
+
+    fn data(vec: &PlgVector<Self>) -> *const Self {
+        unsafe {
+            let int_vec: &PlgVector<E::ReprInt> = std::mem::transmute(vec);
+            E::ReprInt::data(int_vec) as *const Self
+        }
+    }
+
+    fn assign(vec: &mut PlgVector<Self>, data: &[Self]) {
+        unsafe {
+            let int_vec: &mut PlgVector<E::ReprInt> = std::mem::transmute(vec);
+            let int_data = std::slice::from_raw_parts(
+                data.as_ptr() as *const E::ReprInt,
+                data.len()
+            );
+            E::ReprInt::assign(int_vec, int_data);
+        }
+    }
+}
+
+#[macro_export]
 macro_rules! impl_vector_traits {
     (
         $t:ty,
@@ -477,3 +541,51 @@ impl_from_slice!(Vector2);
 impl_from_slice!(Vector3);
 impl_from_slice!(Vector4);
 impl_from_slice!(Matrix4x4);
+
+// ============================================
+// Helper macro for C-compatible enums
+// ============================================
+
+#[macro_export]
+macro_rules! impl_cenum_repr {
+    ($enum_ty:ty, i8) => {
+        unsafe impl $crate::CEnumRepr for $enum_ty {
+            type ReprInt = i8;
+        }
+    };
+    ($enum_ty:ty, i16) => {
+        unsafe impl $crate::CEnumRepr for $enum_ty {
+            type ReprInt = i16;
+        }
+    };
+    ($enum_ty:ty, i32) => {
+        unsafe impl $crate::CEnumRepr for $enum_ty {
+            type ReprInt = i32;
+        }
+    };
+    ($enum_ty:ty, i64) => {
+        unsafe impl $crate::CEnumRepr for $enum_ty {
+            type ReprInt = i64;
+        }
+    };
+    ($enum_ty:ty, u8) => {
+        unsafe impl $crate::CEnumRepr for $enum_ty {
+            type ReprInt = u8;
+        }
+    };
+    ($enum_ty:ty, u16) => {
+        unsafe impl $crate::CEnumRepr for $enum_ty {
+            type ReprInt = u16;
+        }
+    };
+    ($enum_ty:ty, u32) => {
+        unsafe impl $crate::CEnumRepr for $enum_ty {
+            type ReprInt = u32;
+        }
+    };
+    ($enum_ty:ty, u64) => {
+        unsafe impl $crate::CEnumRepr for $enum_ty {
+            type ReprInt = u64;
+        }
+    };
+}

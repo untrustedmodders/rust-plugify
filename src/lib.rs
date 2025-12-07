@@ -2,7 +2,7 @@ pub mod string;
 pub use string::PlgString;
 
 pub mod vector;
-pub use vector::PlgVector;
+pub use vector::{PlgVector, CEnumRepr};
 
 pub mod variant;
 pub use variant::{PlgVariant, PlgAny};
