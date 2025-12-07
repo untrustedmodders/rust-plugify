@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.0.9...plugify-v1.1.0) (2025-12-07)
+
+
+### Features
+
+* final fixes ([36d7466](https://github.com/untrustedmodders/rust-plugify/commit/36d746680141aacdf980e13269b1cb3675930e48))
+
 ## [1.0.9](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.0.8...plugify-v1.0.9) (2025-12-07)
 
 
