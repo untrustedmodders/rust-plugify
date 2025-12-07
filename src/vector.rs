@@ -158,6 +158,16 @@ pub trait PlgVectorOps: Sized {
     fn to_vec(vec: &PlgVector<Self>) -> Vec<Self> where Self: Clone {
         Self::as_slice(vec).to_vec()
     }
+
+    /// Used for const iteration
+    fn iter(vec: &PlgVector<Self>) -> std::slice::Iter<'_, Self> {
+        Self::as_slice(vec).iter()
+    }
+
+    /// Used for mut iteration
+    fn iter_mut(vec: &mut PlgVector<Self>) -> std::slice::IterMut<'_, Self> {
+        Self::as_mut_slice(vec).iter_mut()
+    }
 }
 
 /// Marker trait for C-compatible enums with a specific integer representation
@@ -478,16 +488,6 @@ impl<T: PlgVectorOps> PlgVector<T> {
     /// Destroy the vector (manual cleanup)
     pub fn destroy(&mut self) {
         T::destroy(self);
-    }
-
-    /// Used for const iteration
-    pub fn iter(&self) -> std::slice::Iter<'_, T> {
-        self.as_slice().iter()
-    }
-
-    /// Used for mut iteration
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, T> {
-        self.as_mut_slice().iter_mut()
     }
 }
 
