@@ -1,26 +1,20 @@
-pub mod string;
-pub use string::PlgString;
+mod string;
+mod vector;
+mod variant;
+mod mat4x4;
+mod vec2;
+mod vec3;
+mod vec4;
+mod plugin;
 
-pub mod vector;
-pub use vector::{PlgVector, CEnumRepr};
-
-pub mod variant;
-pub use variant::{PlgVariant, PlgAny};
-
-pub mod mat4x4;
-pub use mat4x4::Matrix4x4;
-
-pub mod vec2;
-pub use vec2::Vector2;
-
-pub mod vec3;
-pub use vec3::Vector3;
-
-pub mod vec4;
-pub use vec4::Vector4;
-
-pub mod plugin;
-pub use plugin::{on_plugin_start, on_plugin_end, on_plugin_update};
+pub use string::*;
+pub use vector::*;
+pub use variant::*;
+pub use mat4x4::*;
+pub use vec2::*;
+pub use vec3::*;
+pub use vec4::*;
+pub use plugin::*;
 
 #[macro_export]
 macro_rules! dynlink_impl {

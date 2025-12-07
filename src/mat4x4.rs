@@ -1,6 +1,6 @@
 use std::fmt;
 use std::ops::{Add, Sub, Mul, Index};
-use crate::vec4::Vector4;
+use crate::Vector4;
 
 // Matrix4x4
 #[repr(C)]
