@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.6](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.0.5...plugify-v1.0.6) (2025-12-07)
+
+
+### Bug Fixes
+
+* add mut indexing ([3afc3de](https://github.com/untrustedmodders/rust-plugify/commit/3afc3de398ac993ab311a924be5d6d3fde781ab7))
+* add mut indexing for string and vector ([6681b8f](https://github.com/untrustedmodders/rust-plugify/commit/6681b8f7ab1c8f9783583ed3c9f673bb5bf2e3d3))
+
 ## [1.0.5](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.0.4...plugify-v1.0.5) (2025-12-07)
 
 
