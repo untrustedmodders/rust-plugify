@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.8](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.0.7...plugify-v1.0.8) (2025-12-07)
+
+
+### Bug Fixes
+
+* make all packages pub ([1133a99](https://github.com/untrustedmodders/rust-plugify/commit/1133a99581745e896e29999aade7684348f7ee1f))
+
 ## [1.0.7](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.0.6...plugify-v1.0.7) (2025-12-07)
 
 
