@@ -1,5 +1,5 @@
 use std::fmt;
-use std::ops::{Add, Sub, Mul, Index};
+use std::ops::{Add, Sub, Mul, Index, IndexMut};
 
 // Vector4
 #[repr(C)]
@@ -118,12 +118,24 @@ impl Mul<f32> for Vector4 {
 impl Index<usize> for Vector4 {
     type Output = f32;
 
-    fn index(&self, index: usize) -> &f32 {
+    fn index(&self, index: usize) -> &Self::Output {
         match index {
             0 => &self.x,
             1 => &self.y,
             2 => &self.z,
             3 => &self.w,
+            _ => panic!("Index out of bounds for Vector4"),
+        }
+    }
+}
+
+impl IndexMut<usize> for Vector4 {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        match index {
+            0 => &mut self.x,
+            1 => &mut self.y,
+            2 => &mut self.z,
+            3 => &mut self.w,
             _ => panic!("Index out of bounds for Vector4"),
         }
     }

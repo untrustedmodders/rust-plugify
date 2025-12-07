@@ -1,5 +1,5 @@
 use std::fmt;
-use std::ops::{Add, Sub, Mul, Index};
+use std::ops::{Add, Sub, Mul, Index, IndexMut};
 use crate::Vector4;
 
 // Matrix4x4
@@ -209,8 +209,14 @@ impl Mul<Vector4> for Matrix4x4 {
 impl Index<usize> for Matrix4x4 {
     type Output = [f32; 4];
 
-    fn index(&self, index: usize) -> &[f32; 4] {
+    fn index(&self, index: usize) -> &Self::Output {
         &self.m[index]
+    }
+}
+
+impl IndexMut<usize> for Matrix4x4 {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.m[index]
     }
 }
 
