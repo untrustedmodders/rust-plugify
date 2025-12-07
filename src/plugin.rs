@@ -10,15 +10,15 @@ dynlink_impl!(get_logs_dir, GET_LOGS_DIR, init_get_logs_dir, () -> PlgString);
 dynlink_impl!(get_cache_dir, GET_CACHE_DIR, init_get_cache_dir, () -> PlgString);
 dynlink_impl!(is_extension_loaded, IS_EXTENSION_LOADED, init_is_extension_loaded, (name:*const u8, nsize:usize, constraint:*const u8, csize:usize) -> bool);
 
-dynlink_impl!(get_plugin_id, GET_PLUGIN_ID, init_get_plugin_id, () -> usize);
-dynlink_impl!(get_plugin_name, GET_PLUGIN_NAME, init_get_plugin_name, () -> PlgString);
-dynlink_impl!(get_plugin_description, GET_PLUGIN_DESCRIPTION, init_get_plugin_description, () -> PlgString);
-dynlink_impl!(get_plugin_version, GET_PLUGIN_VERSION, init_get_plugin_version, () -> PlgString);
-dynlink_impl!(get_plugin_author, GET_PLUGIN_AUTHOR, init_get_plugin_author, () -> PlgString);
-dynlink_impl!(get_plugin_website, GET_PLUGIN_WEBSITE, init_get_plugin_website, () -> PlgString);
-dynlink_impl!(get_plugin_license, GET_PLUGIN_LICENSE, init_get_plugin_license, () -> PlgString);
-dynlink_impl!(get_plugin_location, GET_PLUGIN_LOCATION, init_get_plugin_location, () -> PlgString);
-dynlink_impl!(get_plugin_dependencies, GET_PLUGIN_DEPENDENCIES, init_get_plugin_dependencies, () -> PlgVector<PlgString>);
+dynlink_impl!(get_plugin_id, GET_PLUGIN_ID, init_get_plugin_id, (handle:PluginHandle) -> usize);
+dynlink_impl!(get_plugin_name, GET_PLUGIN_NAME, init_get_plugin_name, (handle:PluginHandle) -> PlgString);
+dynlink_impl!(get_plugin_description, GET_PLUGIN_DESCRIPTION, init_get_plugin_description, (handle:PluginHandle) -> PlgString);
+dynlink_impl!(get_plugin_version, GET_PLUGIN_VERSION, init_get_plugin_version, (handle:PluginHandle) -> PlgString);
+dynlink_impl!(get_plugin_author, GET_PLUGIN_AUTHOR, init_get_plugin_author, (handle:PluginHandle) -> PlgString);
+dynlink_impl!(get_plugin_website, GET_PLUGIN_WEBSITE, init_get_plugin_website, (handle:PluginHandle) -> PlgString);
+dynlink_impl!(get_plugin_license, GET_PLUGIN_LICENSE, init_get_plugin_license, (handle:PluginHandle) -> PlgString);
+dynlink_impl!(get_plugin_location, GET_PLUGIN_LOCATION, init_get_plugin_location, (handle:PluginHandle) -> PlgString);
+dynlink_impl!(get_plugin_dependencies, GET_PLUGIN_DEPENDENCIES, init_get_plugin_dependencies, (handle:PluginHandle) -> PlgVector<PlgString>);
 
 // Constants
 const K_API_VERSION: i32 = 1;
@@ -42,7 +42,7 @@ pub struct PluginInfo {
 
 #[repr(C)]
 #[derive(Debug)]
-struct PluginContext {
+pub struct PluginContext {
     has_update: bool,
     has_start: bool,
     has_end: bool,
@@ -103,7 +103,8 @@ pub fn on_plugin_end(func: fn()) {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn plugify_init(
-    api: *const usize,
+    data: *const usize,
+    len: usize,
     version: i32,
     handle: usize,
 ) -> i32 {
@@ -111,178 +112,176 @@ pub extern "C" fn plugify_init(
         return K_API_VERSION;
     }
 
-    unsafe {
-        let mut i = 0;
+    let api = unsafe { std::slice::from_raw_parts(data, len) };
+    let mut i = 0;
 
-        // Set all the function pointers
-        init_get_method_ptr(*api.add(i)); i += 1;
-        init_get_base_dir(*api.add(i)); i += 1;
-        init_get_extensions_dir(*api.add(i)); i += 1;
-        init_get_configs_dir(*api.add(i)); i += 1;
-        init_get_data_dir(*api.add(i)); i += 1;
-        init_get_logs_dir(*api.add(i)); i += 1;
-        init_get_cache_dir(*api.add(i)); i += 1;
-        init_is_extension_loaded(*api.add(i)); i += 1;
+    // Set all the function pointers
+    init_get_method_ptr(api[i]); i += 1;
+    init_get_base_dir(api[i]); i += 1;
+    init_get_extensions_dir(api[i]); i += 1;
+    init_get_configs_dir(api[i]); i += 1;
+    init_get_data_dir(api[i]); i += 1;
+    init_get_logs_dir(api[i]); i += 1;
+    init_get_cache_dir(api[i]); i += 1;
+    init_is_extension_loaded(api[i]); i += 1;
 
-        init_get_plugin_id(*api.add(i)); i += 1;
-        init_get_plugin_name(*api.add(i)); i += 1;
-        init_get_plugin_description(*api.add(i)); i += 1;
-        init_get_plugin_version(*api.add(i)); i += 1;
-        init_get_plugin_author(*api.add(i)); i += 1;
-        init_get_plugin_website(*api.add(i)); i += 1;
-        init_get_plugin_license(*api.add(i)); i += 1;
-        init_get_plugin_location(*api.add(i)); i += 1;
-        init_get_plugin_dependencies(*api.add(i)); i += 1;
+    init_get_plugin_id(api[i]); i += 1;
+    init_get_plugin_name(api[i]); i += 1;
+    init_get_plugin_description(api[i]); i += 1;
+    init_get_plugin_version(api[i]); i += 1;
+    init_get_plugin_author(api[i]); i += 1;
+    init_get_plugin_website(api[i]); i += 1;
+    init_get_plugin_license(api[i]); i += 1;
+    init_get_plugin_location(api[i]); i += 1;
+    init_get_plugin_dependencies(api[i]); i += 1;
 
-        init_construct_string(*api.add(i)); i += 1;
-        init_destroy_string(*api.add(i)); i += 1;
-        init_get_string_data(*api.add(i)); i += 1;
-        init_get_string_length(*api.add(i)); i += 1;
-        init_assign_string(*api.add(i)); i += 1;
+    init_construct_string(api[i]); i += 1;
+    init_destroy_string(api[i]); i += 1;
+    init_get_string_data(api[i]); i += 1;
+    init_get_string_length(api[i]); i += 1;
+    init_assign_string(api[i]); i += 1;
 
-        init_destroy_variant(*api.add(i)); i += 1;
+    init_destroy_variant(api[i]); i += 1;
 
-        // Vector constructors (20 total)
-        init_construct_vector_bool(*api.add(i)); i += 1;
-        //init_construct_vector_char8(*api.add(i)); i += 1;
-        //init_construct_vector_char16(*api.add(i)); i += 1;
-        init_construct_vector_int8(*api.add(i)); i += 1;
-        init_construct_vector_int16(*api.add(i)); i += 1;
-        init_construct_vector_int32(*api.add(i)); i += 1;
-        init_construct_vector_int64(*api.add(i)); i += 1;
-        init_construct_vector_uint8(*api.add(i)); i += 1;
-        init_construct_vector_uint16(*api.add(i)); i += 1;
-        init_construct_vector_uint32(*api.add(i)); i += 1;
-        init_construct_vector_uint64(*api.add(i)); i += 1;
-        init_construct_vector_pointer(*api.add(i)); i += 1;
-        init_construct_vector_float(*api.add(i)); i += 1;
-        init_construct_vector_double(*api.add(i)); i += 1;
-        init_construct_vector_string(*api.add(i)); i += 1;
-        init_construct_vector_variant(*api.add(i)); i += 1;
-        init_construct_vector_vector2(*api.add(i)); i += 1;
-        init_construct_vector_vector3(*api.add(i)); i += 1;
-        init_construct_vector_vector4(*api.add(i)); i += 1;
-        init_construct_vector_matrix4x4(*api.add(i)); i += 1;
+    // Vector constructors (20 total)
+    init_construct_vector_bool(api[i]); i += 1;
+    init_construct_vector_char8(api[i]); i += 1;
+    init_construct_vector_char16(api[i]); i += 1;
+    init_construct_vector_int8(api[i]); i += 1;
+    init_construct_vector_int16(api[i]); i += 1;
+    init_construct_vector_int32(api[i]); i += 1;
+    init_construct_vector_int64(api[i]); i += 1;
+    init_construct_vector_uint8(api[i]); i += 1;
+    init_construct_vector_uint16(api[i]); i += 1;
+    init_construct_vector_uint32(api[i]); i += 1;
+    init_construct_vector_uint64(api[i]); i += 1;
+    init_construct_vector_pointer(api[i]); i += 1;
+    init_construct_vector_float(api[i]); i += 1;
+    init_construct_vector_double(api[i]); i += 1;
+    init_construct_vector_string(api[i]); i += 1;
+    init_construct_vector_variant(api[i]); i += 1;
+    init_construct_vector_vector2(api[i]); i += 1;
+    init_construct_vector_vector3(api[i]); i += 1;
+    init_construct_vector_vector4(api[i]); i += 1;
+    init_construct_vector_matrix4x4(api[i]); i += 1;
 
-        // Vector destructors (20 total)
-        init_destroy_vector_bool(*api.add(i)); i += 1;
-        //init_destroy_vector_char8(*api.add(i)); i += 1;
-        //init_destroy_vector_char16(*api.add(i)); i += 1;
-        init_destroy_vector_int8(*api.add(i)); i += 1;
-        init_destroy_vector_int16(*api.add(i)); i += 1;
-        init_destroy_vector_int32(*api.add(i)); i += 1;
-        init_destroy_vector_int64(*api.add(i)); i += 1;
-        init_destroy_vector_uint8(*api.add(i)); i += 1;
-        init_destroy_vector_uint16(*api.add(i)); i += 1;
-        init_destroy_vector_uint32(*api.add(i)); i += 1;
-        init_destroy_vector_uint64(*api.add(i)); i += 1;
-        init_destroy_vector_pointer(*api.add(i)); i += 1;
-        init_destroy_vector_float(*api.add(i)); i += 1;
-        init_destroy_vector_double(*api.add(i)); i += 1;
-        init_destroy_vector_string(*api.add(i)); i += 1;
-        init_destroy_vector_variant(*api.add(i)); i += 1;
-        init_destroy_vector_vector2(*api.add(i)); i += 1;
-        init_destroy_vector_vector3(*api.add(i)); i += 1;
-        init_destroy_vector_vector4(*api.add(i)); i += 1;
-        init_destroy_vector_matrix4x4(*api.add(i)); i += 1;
+    // Vector destructors (20 total)
+    init_destroy_vector_bool(api[i]); i += 1;
+    init_destroy_vector_char8(api[i]); i += 1;
+    init_destroy_vector_char16(api[i]); i += 1;
+    init_destroy_vector_int8(api[i]); i += 1;
+    init_destroy_vector_int16(api[i]); i += 1;
+    init_destroy_vector_int32(api[i]); i += 1;
+    init_destroy_vector_int64(api[i]); i += 1;
+    init_destroy_vector_uint8(api[i]); i += 1;
+    init_destroy_vector_uint16(api[i]); i += 1;
+    init_destroy_vector_uint32(api[i]); i += 1;
+    init_destroy_vector_uint64(api[i]); i += 1;
+    init_destroy_vector_pointer(api[i]); i += 1;
+    init_destroy_vector_float(api[i]); i += 1;
+    init_destroy_vector_double(api[i]); i += 1;
+    init_destroy_vector_string(api[i]); i += 1;
+    init_destroy_vector_variant(api[i]); i += 1;
+    init_destroy_vector_vector2(api[i]); i += 1;
+    init_destroy_vector_vector3(api[i]); i += 1;
+    init_destroy_vector_vector4(api[i]); i += 1;
+    init_destroy_vector_matrix4x4(api[i]); i += 1;
 
-        // Vector size getters (20 total)
-        init_get_vector_size_bool(*api.add(i)); i += 1;
-        //init_get_vector_size_char8(*api.add(i)); i += 1;
-        //init_get_vector_size_char16(*api.add(i)); i += 1;
-        init_get_vector_size_int8(*api.add(i)); i += 1;
-        init_get_vector_size_int16(*api.add(i)); i += 1;
-        init_get_vector_size_int32(*api.add(i)); i += 1;
-        init_get_vector_size_int64(*api.add(i)); i += 1;
-        init_get_vector_size_uint8(*api.add(i)); i += 1;
-        init_get_vector_size_uint16(*api.add(i)); i += 1;
-        init_get_vector_size_uint32(*api.add(i)); i += 1;
-        init_get_vector_size_uint64(*api.add(i)); i += 1;
-        init_get_vector_size_pointer(*api.add(i)); i += 1;
-        init_get_vector_size_float(*api.add(i)); i += 1;
-        init_get_vector_size_double(*api.add(i)); i += 1;
-        init_get_vector_size_string(*api.add(i)); i += 1;
-        init_get_vector_size_variant(*api.add(i)); i += 1;
-        init_get_vector_size_vector2(*api.add(i)); i += 1;
-        init_get_vector_size_vector3(*api.add(i)); i += 1;
-        init_get_vector_size_vector4(*api.add(i)); i += 1;
-        init_get_vector_size_matrix4x4(*api.add(i)); i += 1;
+    // Vector size getters (20 total)
+    init_get_vector_size_bool(api[i]); i += 1;
+    init_get_vector_size_char8(api[i]); i += 1;
+    init_get_vector_size_char16(api[i]); i += 1;
+    init_get_vector_size_int8(api[i]); i += 1;
+    init_get_vector_size_int16(api[i]); i += 1;
+    init_get_vector_size_int32(api[i]); i += 1;
+    init_get_vector_size_int64(api[i]); i += 1;
+    init_get_vector_size_uint8(api[i]); i += 1;
+    init_get_vector_size_uint16(api[i]); i += 1;
+    init_get_vector_size_uint32(api[i]); i += 1;
+    init_get_vector_size_uint64(api[i]); i += 1;
+    init_get_vector_size_pointer(api[i]); i += 1;
+    init_get_vector_size_float(api[i]); i += 1;
+    init_get_vector_size_double(api[i]); i += 1;
+    init_get_vector_size_string(api[i]); i += 1;
+    init_get_vector_size_variant(api[i]); i += 1;
+    init_get_vector_size_vector2(api[i]); i += 1;
+    init_get_vector_size_vector3(api[i]); i += 1;
+    init_get_vector_size_vector4(api[i]); i += 1;
+    init_get_vector_size_matrix4x4(api[i]); i += 1;
 
-        // Vector data getters (20 total)
-        init_get_vector_data_bool(*api.add(i)); i += 1;
-        //init_get_vector_data_char8(*api.add(i)); i += 1;
-        //init_get_vector_data_char16(*api.add(i)); i += 1;
-        init_get_vector_data_int8(*api.add(i)); i += 1;
-        init_get_vector_data_int16(*api.add(i)); i += 1;
-        init_get_vector_data_int32(*api.add(i)); i += 1;
-        init_get_vector_data_int64(*api.add(i)); i += 1;
-        init_get_vector_data_uint8(*api.add(i)); i += 1;
-        init_get_vector_data_uint16(*api.add(i)); i += 1;
-        init_get_vector_data_uint32(*api.add(i)); i += 1;
-        init_get_vector_data_uint64(*api.add(i)); i += 1;
-        init_get_vector_data_pointer(*api.add(i)); i += 1;
-        init_get_vector_data_float(*api.add(i)); i += 1;
-        init_get_vector_data_double(*api.add(i)); i += 1;
-        init_get_vector_data_string(*api.add(i)); i += 1;
-        init_get_vector_data_variant(*api.add(i)); i += 1;
-        init_get_vector_data_vector2(*api.add(i)); i += 1;
-        init_get_vector_data_vector3(*api.add(i)); i += 1;
-        init_get_vector_data_vector4(*api.add(i)); i += 1;
-        init_get_vector_data_matrix4x4(*api.add(i)); i += 1;
+    // Vector data getters (20 total)
+    init_get_vector_data_bool(api[i]); i += 1;
+    init_get_vector_data_char8(api[i]); i += 1;
+    init_get_vector_data_char16(api[i]); i += 1;
+    init_get_vector_data_int8(api[i]); i += 1;
+    init_get_vector_data_int16(api[i]); i += 1;
+    init_get_vector_data_int32(api[i]); i += 1;
+    init_get_vector_data_int64(api[i]); i += 1;
+    init_get_vector_data_uint8(api[i]); i += 1;
+    init_get_vector_data_uint16(api[i]); i += 1;
+    init_get_vector_data_uint32(api[i]); i += 1;
+    init_get_vector_data_uint64(api[i]); i += 1;
+    init_get_vector_data_pointer(api[i]); i += 1;
+    init_get_vector_data_float(api[i]); i += 1;
+    init_get_vector_data_double(api[i]); i += 1;
+    init_get_vector_data_string(api[i]); i += 1;
+    init_get_vector_data_variant(api[i]); i += 1;
+    init_get_vector_data_vector2(api[i]); i += 1;
+    init_get_vector_data_vector3(api[i]); i += 1;
+    init_get_vector_data_vector4(api[i]); i += 1;
+    init_get_vector_data_matrix4x4(api[i]); i += 1;
 
-        // Vector assign (20 total)
-        init_assign_vector_bool(*api.add(i)); i += 1;
-        //init_assign_vector_char8(*api.add(i)); i += 1;
-        //init_assign_vector_char16(*api.add(i)); i += 1;
-        init_assign_vector_int8(*api.add(i)); i += 1;
-        init_assign_vector_int16(*api.add(i)); i += 1;
-        init_assign_vector_int32(*api.add(i)); i += 1;
-        init_assign_vector_int64(*api.add(i)); i += 1;
-        init_assign_vector_uint8(*api.add(i)); i += 1;
-        init_assign_vector_uint16(*api.add(i)); i += 1;
-        init_assign_vector_uint32(*api.add(i)); i += 1;
-        init_assign_vector_uint64(*api.add(i)); i += 1;
-        init_assign_vector_pointer(*api.add(i)); i += 1;
-        init_assign_vector_float(*api.add(i)); i += 1;
-        init_assign_vector_double(*api.add(i)); i += 1;
-        init_assign_vector_string(*api.add(i)); i += 1;
-        init_assign_vector_variant(*api.add(i)); i += 1;
-        init_assign_vector_vector2(*api.add(i)); i += 1;
-        init_assign_vector_vector3(*api.add(i)); i += 1;
-        init_assign_vector_vector4(*api.add(i)); i += 1;
-        init_assign_vector_matrix4x4(*api.add(i)); //i += 1;
+    // Vector assign (20 total)
+    init_assign_vector_bool(api[i]); i += 1;
+    init_assign_vector_char8(api[i]); i += 1;
+    init_assign_vector_char16(api[i]); i += 1;
+    init_assign_vector_int8(api[i]); i += 1;
+    init_assign_vector_int16(api[i]); i += 1;
+    init_assign_vector_int32(api[i]); i += 1;
+    init_assign_vector_int64(api[i]); i += 1;
+    init_assign_vector_uint8(api[i]); i += 1;
+    init_assign_vector_uint16(api[i]); i += 1;
+    init_assign_vector_uint32(api[i]); i += 1;
+    init_assign_vector_uint64(api[i]); i += 1;
+    init_assign_vector_pointer(api[i]); i += 1;
+    init_assign_vector_float(api[i]); i += 1;
+    init_assign_vector_double(api[i]); i += 1;
+    init_assign_vector_string(api[i]); i += 1;
+    init_assign_vector_variant(api[i]); i += 1;
+    init_assign_vector_vector2(api[i]); i += 1;
+    init_assign_vector_vector3(api[i]); i += 1;
+    init_assign_vector_vector4(api[i]); i += 1;
+    init_assign_vector_matrix4x4(api[i]); //i += 1;
 
-        // Get directory paths
-        BASE_DIR.set(get_base_dir().to_string()).expect("BASE_DIR: can only be set once");
-        EXTENSIONS_DIR.set(get_extensions_dir().to_string()).expect("EXTENSIONS_DIR: can only be set once");
-        CONFIGS_DIR.set(get_configs_dir().to_string()).expect("CONFIGS_DIR: can only be set once");
-        DATA_DIR.set(get_data_dir().to_string()).expect("DATA_DIR: can only be set once");
-        LOGS_DIR.set(get_logs_dir().to_string()).expect("LOGS_DIR: can only be set once");
-        CACHE_DIR.set(get_cache_dir().to_string()).expect("CACHE_DIR: can only be set once");
+    // Get directory paths
+    BASE_DIR.set(get_base_dir().to_string()).expect("BASE_DIR: can only be set once");
+    EXTENSIONS_DIR.set(get_extensions_dir().to_string()).expect("EXTENSIONS_DIR: can only be set once");
+    CONFIGS_DIR.set(get_configs_dir().to_string()).expect("CONFIGS_DIR: can only be set once");
+    DATA_DIR.set(get_data_dir().to_string()).expect("DATA_DIR: can only be set once");
+    LOGS_DIR.set(get_logs_dir().to_string()).expect("LOGS_DIR: can only be set once");
+    CACHE_DIR.set(get_cache_dir().to_string()).expect("CACHE_DIR: can only be set once");
 
-        // Store plugin handle
-        HANDLE.set(handle).expect("HANDLE: can only be set once");
+    // Store plugin handle
+    HANDLE.set(handle).expect("HANDLE: can only be set once");
 
-        PLUGIN.set(PluginInfo {
-            id: get_plugin_id(),
-            name: get_plugin_name().to_string(),
-            description: get_plugin_description().to_string(),
-            version: get_plugin_version().to_string(),
-            author: get_plugin_author().to_string(),
-            website: get_plugin_website().to_string(),
-            license: get_plugin_license().to_string(),
-            location: get_plugin_location().to_string(),
-            dependencies: get_plugin_dependencies().to_strings(),
-        }).expect("PLUGIN: can only be set once");
+    PLUGIN.set(PluginInfo {
+        id: get_plugin_id(handle),
+        name: get_plugin_name(handle).to_string(),
+        description: get_plugin_description(handle).to_string(),
+        version: get_plugin_version(handle).to_string(),
+        author: get_plugin_author(handle).to_string(),
+        website: get_plugin_website(handle).to_string(),
+        license: get_plugin_license(handle).to_string(),
+        location: get_plugin_location(handle).to_string(),
+        dependencies: get_plugin_dependencies(handle).to_strings(),
+    }).expect("PLUGIN: can only be set once");
 
-        let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::default());
-        CONTEXT.set(PluginContext {
-            has_update: callbacks.update_callback.get().is_some(),
-            has_start: callbacks.start_callback.get().is_some(),
-            has_end: callbacks.end_callback.get().is_some()
-        }).expect("PLUGIN: can only be set once");
-    }
-
+    let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::default());
+    CONTEXT.set(PluginContext {
+        has_update: callbacks.update_callback.get().is_some(),
+        has_start: callbacks.start_callback.get().is_some(),
+        has_end: callbacks.end_callback.get().is_some()
+    }).expect("PLUGIN: can only be set once");
     0
 }
 

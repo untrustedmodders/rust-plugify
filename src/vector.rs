@@ -1,8 +1,10 @@
 use std::sync::{OnceLock};
-use crate::{dynlink_impl, PlgString, PlgVariant, PlgAny, Vector2, Vector3, Vector4, Matrix4x4};
+use crate::{dynlink_impl, PlgString, PlgVariant, Vector2, Vector3, Vector4, Matrix4x4};
 
 // Vector constructors
 dynlink_impl!(construct_vector_bool, CONSTRUCT_VECTOR_BOOL, init_construct_vector_bool, (data: *const bool, size: usize) -> PlgVector<bool>);
+dynlink_impl!(construct_vector_char8, CONSTRUCT_VECTOR_CHAR8, init_construct_vector_char8, (data: *const i8, size: usize) -> PlgVector<i8>);
+dynlink_impl!(construct_vector_char16, CONSTRUCT_VECTOR_CHAR16, init_construct_vector_char16, (data: *const u16, size: usize) -> PlgVector<u16>);
 dynlink_impl!(construct_vector_int8, CONSTRUCT_VECTOR_INT8, init_construct_vector_int8, (data: *const i8, size: usize) -> PlgVector<i8>);
 dynlink_impl!(construct_vector_int16, CONSTRUCT_VECTOR_INT16, init_construct_vector_int16, (data: *const i16, size: usize) -> PlgVector<i16>);
 dynlink_impl!(construct_vector_int32, CONSTRUCT_VECTOR_INT32, init_construct_vector_int32, (data: *const i32, size: usize) -> PlgVector<i32>);
@@ -23,6 +25,8 @@ dynlink_impl!(construct_vector_matrix4x4, CONSTRUCT_VECTOR_MATRIX4X4, init_const
 
 // Vector destructors
 dynlink_impl!(destroy_vector_bool, DESTROY_VECTOR_BOOL, init_destroy_vector_bool, (vec: *mut PlgVector<bool>) -> ());
+dynlink_impl!(destroy_vector_char8, DESTROY_VECTOR_CHAR8, init_destroy_vector_char8, (vec: *mut PlgVector<i8>) -> ());
+dynlink_impl!(destroy_vector_char16, DESTROY_VECTOR_CHAR16, init_destroy_vector_char16, (vec: *mut PlgVector<u16>) -> ());
 dynlink_impl!(destroy_vector_int8, DESTROY_VECTOR_INT8, init_destroy_vector_int8, (vec: *mut PlgVector<i8>) -> ());
 dynlink_impl!(destroy_vector_int16, DESTROY_VECTOR_INT16, init_destroy_vector_int16, (vec: *mut PlgVector<i16>) -> ());
 dynlink_impl!(destroy_vector_int32, DESTROY_VECTOR_INT32, init_destroy_vector_int32, (vec: *mut PlgVector<i32>) -> ());
@@ -43,6 +47,8 @@ dynlink_impl!(destroy_vector_matrix4x4, DESTROY_VECTOR_MATRIX4X4, init_destroy_v
 
 // Vector size getters
 dynlink_impl!(get_vector_size_bool, GET_VECTOR_SIZE_BOOL, init_get_vector_size_bool, (vec: *const PlgVector<bool>) -> usize);
+dynlink_impl!(get_vector_size_char8, GET_VECTOR_SIZE_CHAR8, init_get_vector_size_char8, (vec: *const PlgVector<i8>) -> usize);
+dynlink_impl!(get_vector_size_char16, GET_VECTOR_SIZE_CHAR16, init_get_vector_size_char16, (vec: *const PlgVector<u16>) -> usize);
 dynlink_impl!(get_vector_size_int8, GET_VECTOR_SIZE_INT8, init_get_vector_size_int8, (vec: *const PlgVector<i8>) -> usize);
 dynlink_impl!(get_vector_size_int16, GET_VECTOR_SIZE_INT16, init_get_vector_size_int16, (vec: *const PlgVector<i16>) -> usize);
 dynlink_impl!(get_vector_size_int32, GET_VECTOR_SIZE_INT32, init_get_vector_size_int32, (vec: *const PlgVector<i32>) -> usize);
@@ -63,6 +69,8 @@ dynlink_impl!(get_vector_size_matrix4x4, GET_VECTOR_SIZE_MATRIX4X4, init_get_vec
 
 // Vector data getters
 dynlink_impl!(get_vector_data_bool, GET_VECTOR_DATA_BOOL, init_get_vector_data_bool, (vec: *const PlgVector<bool>) -> *const bool);
+dynlink_impl!(get_vector_data_char8, GET_VECTOR_DATA_CHAR8, init_get_vector_data_char8, (vec: *const PlgVector<i8>) -> *const i8);
+dynlink_impl!(get_vector_data_char16, GET_VECTOR_DATA_CHAR16, init_get_vector_data_char16, (vec: *const PlgVector<u16>) -> *const u16);
 dynlink_impl!(get_vector_data_int8, GET_VECTOR_DATA_INT8, init_get_vector_data_int8, (vec: *const PlgVector<i8>) -> *const i8);
 dynlink_impl!(get_vector_data_int16, GET_VECTOR_DATA_INT16, init_get_vector_data_int16, (vec: *const PlgVector<i16>) -> *const i16);
 dynlink_impl!(get_vector_data_int32, GET_VECTOR_DATA_INT32, init_get_vector_data_int32, (vec: *const PlgVector<i32>) -> *const i32);
@@ -83,6 +91,8 @@ dynlink_impl!(get_vector_data_matrix4x4, GET_VECTOR_DATA_MATRIX4X4, init_get_vec
 
 // Vector assign
 dynlink_impl!(assign_vector_bool, ASSIGN_VECTOR_BOOL, init_assign_vector_bool, (vec: *mut PlgVector<bool>, data: *const bool, size: usize) -> ());
+dynlink_impl!(assign_vector_char8, ASSIGN_VECTOR_CHAR8, init_assign_vector_char8, (vec: *mut PlgVector<i8>, data: *const i8, size: usize) -> ());
+dynlink_impl!(assign_vector_char16, ASSIGN_VECTOR_CHAR16, init_assign_vector_char16, (vec: *mut PlgVector<u16>, data: *const u16, size: usize) -> ());
 dynlink_impl!(assign_vector_int8, ASSIGN_VECTOR_INT8, init_assign_vector_int8, (vec: *mut PlgVector<i8>, data: *const i8, size: usize) -> ());
 dynlink_impl!(assign_vector_int16, ASSIGN_VECTOR_INT16, init_assign_vector_int16, (vec: *mut PlgVector<i16>, data: *const i16, size: usize) -> ());
 dynlink_impl!(assign_vector_int32, ASSIGN_VECTOR_INT32, init_assign_vector_int32, (vec: *mut PlgVector<i32>, data: *const i32, size: usize) -> ());
@@ -125,10 +135,10 @@ pub trait PlgVectorOps: Sized {
     /// Get data as slice (zero-copy view)
     fn as_slice(vec: &PlgVector<Self>) -> &[Self] {
         unsafe {
-            let size = Self::len(vec);
-            if size == 0 { return &[]; }
-            let data_ptr = Self::data(vec);
-            std::slice::from_raw_parts(data_ptr, size)
+            let len = Self::len(vec);
+            if len == 0 { return &[]; }
+            let data = Self::data(vec);
+            std::slice::from_raw_parts(data, len)
         }
     }
 
