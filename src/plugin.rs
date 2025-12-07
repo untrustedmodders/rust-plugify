@@ -1,4 +1,4 @@
-use std::sync::{OnceLock};
+use std::sync::OnceLock;
 use crate::{dynlink_impl, vector::*, string::*, variant::*};
 
 dynlink_impl!(get_method_ptr, GET_METHOD_PTR, init_get_method_ptr, (name:*const u8, size:usize) -> usize);

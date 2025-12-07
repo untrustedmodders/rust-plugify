@@ -1,5 +1,5 @@
 use std::mem::{ManuallyDrop};
-use std::sync::{OnceLock};
+use std::sync::OnceLock;
 use crate::{dynlink_impl, PlgString, PlgVector, Vector2, Vector3, Vector4, Matrix4x4};
 
 dynlink_impl!(destroy_variant, DESTROY_VARIANT, init_destroy_variant, (variant: *mut PlgVariant) -> ());
@@ -411,7 +411,7 @@ impl Drop for PlgVariant {
 // ============================================
 
 #[macro_export]
-macro_rules! impl_from_primitive {
+macro_rules! variant_from_primitive {
     ($rust_type:ty, $variant:ident) => {
         impl From<$rust_type> for PlgAny {
             fn from(value: $rust_type) -> Self {
@@ -421,21 +421,21 @@ macro_rules! impl_from_primitive {
     };
 }
 
-impl_from_primitive!(bool, Bool);
-impl_from_primitive!(i8, Int8);
-impl_from_primitive!(i16, Int16);
-impl_from_primitive!(i32, Int32);
-impl_from_primitive!(i64, Int64);
-impl_from_primitive!(u8, UInt8);
-impl_from_primitive!(u16, UInt16);
-impl_from_primitive!(u32, UInt32);
-impl_from_primitive!(u64, UInt64);
-impl_from_primitive!(usize, Pointer);
-impl_from_primitive!(f32, Float);
-impl_from_primitive!(f64, Double);
-impl_from_primitive!(Vector2, Vector2);
-impl_from_primitive!(Vector3, Vector3);
-impl_from_primitive!(Vector4, Vector4);
+variant_from_primitive!(bool, Bool);
+variant_from_primitive!(i8, Int8);
+variant_from_primitive!(i16, Int16);
+variant_from_primitive!(i32, Int32);
+variant_from_primitive!(i64, Int64);
+variant_from_primitive!(u8, UInt8);
+variant_from_primitive!(u16, UInt16);
+variant_from_primitive!(u32, UInt32);
+variant_from_primitive!(u64, UInt64);
+variant_from_primitive!(usize, Pointer);
+variant_from_primitive!(f32, Float);
+variant_from_primitive!(f64, Double);
+variant_from_primitive!(Vector2, Vector2);
+variant_from_primitive!(Vector3, Vector3);
+variant_from_primitive!(Vector4, Vector4);
 
 impl From<String> for PlgAny {
     fn from(value: String) -> Self {
@@ -450,7 +450,7 @@ impl From<&str> for PlgAny {
 }
 
 #[macro_export]
-macro_rules! impl_from_vec {
+macro_rules! variant_from_vec {
     ($t:ty, $variant:ident) => {
         impl From<Vec<$t>> for PlgAny {
             fn from(value: Vec<$t>) -> Self {
@@ -461,23 +461,23 @@ macro_rules! impl_from_vec {
 }
 
 // Usage
-impl_from_vec!(bool, ArrayBool);
-impl_from_vec!(i8, ArrayInt8);
-impl_from_vec!(i16, ArrayInt16);
-impl_from_vec!(i32, ArrayInt32);
-impl_from_vec!(i64, ArrayInt64);
-impl_from_vec!(u8, ArrayUInt8);
-impl_from_vec!(u16, ArrayUInt16);
-impl_from_vec!(u32, ArrayUInt32);
-impl_from_vec!(u64, ArrayUInt64);
-impl_from_vec!(usize, ArrayPointer);
-impl_from_vec!(f32, ArrayFloat);
-impl_from_vec!(f64, ArrayDouble);
-impl_from_vec!(String, ArrayString);
-impl_from_vec!(Vector2, ArrayVector2);
-impl_from_vec!(Vector3, ArrayVector3);
-impl_from_vec!(Vector4, ArrayVector4);
-impl_from_vec!(Matrix4x4, ArrayMatrix4x4);
+variant_from_vec!(bool, ArrayBool);
+variant_from_vec!(i8, ArrayInt8);
+variant_from_vec!(i16, ArrayInt16);
+variant_from_vec!(i32, ArrayInt32);
+variant_from_vec!(i64, ArrayInt64);
+variant_from_vec!(u8, ArrayUInt8);
+variant_from_vec!(u16, ArrayUInt16);
+variant_from_vec!(u32, ArrayUInt32);
+variant_from_vec!(u64, ArrayUInt64);
+variant_from_vec!(usize, ArrayPointer);
+variant_from_vec!(f32, ArrayFloat);
+variant_from_vec!(f64, ArrayDouble);
+variant_from_vec!(String, ArrayString);
+variant_from_vec!(Vector2, ArrayVector2);
+variant_from_vec!(Vector3, ArrayVector3);
+variant_from_vec!(Vector4, ArrayVector4);
+variant_from_vec!(Matrix4x4, ArrayMatrix4x4);
 
 // PlgVariant From PlgAny
 impl From<PlgAny> for PlgVariant {

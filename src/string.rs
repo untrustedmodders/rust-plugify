@@ -1,4 +1,4 @@
-use std::sync::{OnceLock};
+use std::sync::OnceLock;
 use crate::dynlink_impl;
 
 dynlink_impl!(construct_string, CONSTRUCT_STRING, init_construct_string, (data:*const u8, size:usize) -> PlgString);

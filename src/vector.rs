@@ -1,4 +1,5 @@
-use std::sync::{OnceLock};
+use std::ops::Index;
+use std::sync::OnceLock;
 use crate::{dynlink_impl, PlgString, PlgVariant, Vector2, Vector3, Vector4, Matrix4x4};
 
 // Vector constructors
@@ -212,7 +213,7 @@ impl<E: CEnumRepr> PlgVectorOps for E {
 }
 
 #[macro_export]
-macro_rules! impl_vector_traits {
+macro_rules! vector_ops_traits {
     (
         $t:ty,
         $construct:path,
@@ -245,7 +246,7 @@ macro_rules! impl_vector_traits {
     };
 }
 
-impl_vector_traits!(
+vector_ops_traits!(
     bool,
     construct_vector_bool,
     destroy_vector_bool,
@@ -254,7 +255,7 @@ impl_vector_traits!(
     assign_vector_bool
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     i8,
     construct_vector_int8,
     destroy_vector_int8,
@@ -263,7 +264,7 @@ impl_vector_traits!(
     assign_vector_int8
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     i16,
     construct_vector_int16,
     destroy_vector_int16,
@@ -272,7 +273,7 @@ impl_vector_traits!(
     assign_vector_int16
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     i32,
     construct_vector_int32,
     destroy_vector_int32,
@@ -281,7 +282,7 @@ impl_vector_traits!(
     assign_vector_int32
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     i64,
     construct_vector_int64,
     destroy_vector_int64,
@@ -290,7 +291,7 @@ impl_vector_traits!(
     assign_vector_int64
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     u8,
     construct_vector_uint8,
     destroy_vector_uint8,
@@ -299,7 +300,7 @@ impl_vector_traits!(
     assign_vector_uint8
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     u16,
     construct_vector_uint16,
     destroy_vector_uint16,
@@ -308,7 +309,7 @@ impl_vector_traits!(
     assign_vector_uint16
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     u32,
     construct_vector_uint32,
     destroy_vector_uint32,
@@ -317,7 +318,7 @@ impl_vector_traits!(
     assign_vector_uint32
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     u64,
     construct_vector_uint64,
     destroy_vector_uint64,
@@ -326,7 +327,7 @@ impl_vector_traits!(
     assign_vector_uint64
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     usize,
     construct_vector_pointer,
     destroy_vector_pointer,
@@ -335,7 +336,7 @@ impl_vector_traits!(
     assign_vector_pointer
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     f32,
     construct_vector_float,
     destroy_vector_float,
@@ -344,7 +345,7 @@ impl_vector_traits!(
     assign_vector_float
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     f64,
     construct_vector_double,
     destroy_vector_double,
@@ -353,7 +354,7 @@ impl_vector_traits!(
     assign_vector_double
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     Vector2,
     construct_vector_vector2,
     destroy_vector_vector2,
@@ -362,7 +363,7 @@ impl_vector_traits!(
     assign_vector_vector2
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     Vector3,
     construct_vector_vector3,
     destroy_vector_vector3,
@@ -371,7 +372,7 @@ impl_vector_traits!(
     assign_vector_vector3
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     Vector4,
     construct_vector_vector4,
     destroy_vector_vector4,
@@ -380,7 +381,7 @@ impl_vector_traits!(
     assign_vector_vector4
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     Matrix4x4,
     construct_vector_matrix4x4,
     destroy_vector_matrix4x4,
@@ -389,7 +390,7 @@ impl_vector_traits!(
     assign_vector_matrix4x4
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     PlgString,
     construct_vector_string,
     destroy_vector_string,
@@ -398,7 +399,7 @@ impl_vector_traits!(
     assign_vector_string
 );
 
-impl_vector_traits!(
+vector_ops_traits!(
     PlgVariant,
     construct_vector_variant,
     destroy_vector_variant,
@@ -448,6 +449,14 @@ impl<T: PlgVectorOps> PlgVector<T> {
     }
 }
 
+impl<T: PlgVectorOps> Index<usize> for PlgVector<T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &T {
+        &self.as_slice()[index]
+    }
+}
+
 impl<T: PlgVectorOps> Drop for PlgVector<T>  {
     fn drop(&mut self) {
         T::destroy(self);
@@ -485,7 +494,7 @@ impl From<Vec<String>> for PlgVector<PlgString> {
 // ============================================
 
 #[macro_export]
-macro_rules! impl_from_vec {
+macro_rules! vector_from_vec {
     ($t:ty) => {
         impl From<Vec<$t>> for PlgVector<$t> {
             fn from(value: Vec<$t>) -> Self {
@@ -495,27 +504,27 @@ macro_rules! impl_from_vec {
     };
 }
 
-impl_from_vec!(bool);
-impl_from_vec!(i8);
-impl_from_vec!(i16);
-impl_from_vec!(i32);
-impl_from_vec!(i64);
-impl_from_vec!(u8);
-impl_from_vec!(u16);
-impl_from_vec!(u32);
-impl_from_vec!(u64);
-impl_from_vec!(usize);
-impl_from_vec!(f32);
-impl_from_vec!(f64);
-impl_from_vec!(PlgString);
-impl_from_vec!(PlgVariant);
-impl_from_vec!(Vector2);
-impl_from_vec!(Vector3);
-impl_from_vec!(Vector4);
-impl_from_vec!(Matrix4x4);
+vector_from_vec!(bool);
+vector_from_vec!(i8);
+vector_from_vec!(i16);
+vector_from_vec!(i32);
+vector_from_vec!(i64);
+vector_from_vec!(u8);
+vector_from_vec!(u16);
+vector_from_vec!(u32);
+vector_from_vec!(u64);
+vector_from_vec!(usize);
+vector_from_vec!(f32);
+vector_from_vec!(f64);
+vector_from_vec!(PlgString);
+vector_from_vec!(PlgVariant);
+vector_from_vec!(Vector2);
+vector_from_vec!(Vector3);
+vector_from_vec!(Vector4);
+vector_from_vec!(Matrix4x4);
 
 #[macro_export]
-macro_rules! impl_from_slice {
+macro_rules! vector_from_slice {
     ($t:ty) => {
         impl From<&[$t]> for PlgVector<$t> {
             fn from(value: &[$t]) -> Self {
@@ -525,31 +534,31 @@ macro_rules! impl_from_slice {
     };
 }
 
-impl_from_slice!(bool);
-impl_from_slice!(i8);
-impl_from_slice!(i16);
-impl_from_slice!(i32);
-impl_from_slice!(i64);
-impl_from_slice!(u8);
-impl_from_slice!(u16);
-impl_from_slice!(u32);
-impl_from_slice!(u64);
-impl_from_slice!(usize);
-impl_from_slice!(f32);
-impl_from_slice!(f64);
-impl_from_slice!(PlgString);
-impl_from_slice!(PlgVariant);
-impl_from_slice!(Vector2);
-impl_from_slice!(Vector3);
-impl_from_slice!(Vector4);
-impl_from_slice!(Matrix4x4);
+vector_from_slice!(bool);
+vector_from_slice!(i8);
+vector_from_slice!(i16);
+vector_from_slice!(i32);
+vector_from_slice!(i64);
+vector_from_slice!(u8);
+vector_from_slice!(u16);
+vector_from_slice!(u32);
+vector_from_slice!(u64);
+vector_from_slice!(usize);
+vector_from_slice!(f32);
+vector_from_slice!(f64);
+vector_from_slice!(PlgString);
+vector_from_slice!(PlgVariant);
+vector_from_slice!(Vector2);
+vector_from_slice!(Vector3);
+vector_from_slice!(Vector4);
+vector_from_slice!(Matrix4x4);
 
 // ============================================
 // Helper macro for C-compatible enums
 // ============================================
 
 #[macro_export]
-macro_rules! impl_cenum_repr {
+macro_rules! vector_enum_traits {
     ($enum_ty:ty, i8) => {
         unsafe impl $crate::CEnumRepr for $enum_ty {
             type ReprInt = i8;
