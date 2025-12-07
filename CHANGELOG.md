@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.4](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.0.3...plugify-v1.0.4) (2025-12-07)
+
+
+### Bug Fixes
+
+* add enum support ([bb6a96c](https://github.com/untrustedmodders/rust-plugify/commit/bb6a96cef01a484283b7e42c7782ae2d79647e9b))
+* change how exports work ([7a28fb9](https://github.com/untrustedmodders/rust-plugify/commit/7a28fb9684cbf44e6f88ca363ea44b65be4e57e1))
+
 ## [1.0.3](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.0.2...plugify-v1.0.3) (2025-12-07)
 
 
