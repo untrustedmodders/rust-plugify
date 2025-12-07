@@ -1,11 +1,11 @@
-mod string;
-mod vector;
-mod variant;
-mod mat4x4;
-mod vec2;
-mod vec3;
-mod vec4;
-mod plugin;
+pub mod string;
+pub mod vector;
+pub mod variant;
+pub mod mat4x4;
+pub mod vec2;
+pub mod vec3;
+pub mod vec4;
+pub mod plugin;
 
 pub use string::*;
 pub use vector::*;

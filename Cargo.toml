@@ -2,6 +2,12 @@
 name = "plugify"
 version = "1.0.7"
 edition = "2024"
+description = "A core library with FFI support for dynamic plugin loading in Plugify System"
+license = "MIT"
+repository = "https://github.com/untrustedmodders/rust-plugify"
+readme = "README.md"
+keywords = ["plugin", "ffi", "dynamic-loading"]
+categories = ["development-tools", "api-bindings"]
 
 [dependencies]
 
