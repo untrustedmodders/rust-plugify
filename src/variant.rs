@@ -191,11 +191,11 @@ impl PlgVariant {
             pad: [0; 8],
             current: PlgType::Invalid,
         };
-        variant.assign(value);
+        variant.set(value);
         variant
     }
 
-    pub fn assign(&mut self, value: &PlgAny) {
+    pub fn set(&mut self, value: &PlgAny) {
         match value {
             PlgAny::Invalid => {
                 self.current = PlgType::Invalid;
@@ -351,7 +351,7 @@ impl PlgVariant {
         }
     }
 
-    pub fn get_value(&self) -> PlgAny {
+    pub fn get(&self) -> PlgAny {
         unsafe {
             match self.current {
                 PlgType::Invalid => PlgAny::Invalid,
@@ -384,7 +384,7 @@ impl PlgVariant {
                 PlgType::ArrayPointer => PlgAny::ArrayPointer(self.data.vec_usize.to_vec()),
                 PlgType::ArrayFloat => PlgAny::ArrayFloat(self.data.vec_f32.to_vec()),
                 PlgType::ArrayDouble => PlgAny::ArrayDouble(self.data.vec_f64.to_vec()),
-                PlgType::ArrayString => PlgAny::ArrayString(self.data.vec_str.to_strings()),
+                PlgType::ArrayString => PlgAny::ArrayString(self.data.vec_str.to_string()),
                 PlgType::ArrayVector2 => PlgAny::ArrayVector2(self.data.vec_vec2.to_vec()),
                 PlgType::ArrayVector3 => PlgAny::ArrayVector3(self.data.vec_vec3.to_vec()),
                 PlgType::ArrayVector4 => PlgAny::ArrayVector4(self.data.vec_vec4.to_vec()),

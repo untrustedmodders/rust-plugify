@@ -1,6 +1,6 @@
 use std::ops::{Index, IndexMut};
 use std::sync::OnceLock;
-use crate::{dynlink_impl, PlgString, PlgVariant, Vector2, Vector3, Vector4, Matrix4x4};
+use crate::{dynlink_impl, PlgString, PlgVariant, PlgAny, Vector2, Vector3, Vector4, Matrix4x4};
 
 // Vector constructors
 dynlink_impl!(construct_vector_bool, CONSTRUCT_VECTOR_BOOL, init_construct_vector_bool, (data: *const bool, size: usize) -> PlgVector<bool>);
@@ -512,9 +512,12 @@ impl<T: PlgVectorOps> Drop for PlgVector<T>  {
     }
 }
 
+// ============================================
+// Convenient String/Any implementations
+// ============================================
+
 impl PlgVector<PlgString> {
-    /// Convert to Vec<String>
-    pub fn to_strings(&self) -> Vec<String> {
+    pub fn to_string(&self) -> Vec<String> {
         self.as_slice()
             .iter()
             .map(|s| s.to_string())
@@ -531,9 +534,32 @@ impl From<&[String]> for PlgVector<PlgString> {
     }
 }
 
-// Or for Vec<String>
 impl From<Vec<String>> for PlgVector<PlgString> {
     fn from(data: Vec<String>) -> Self {
+        PlgVector::from(&data[..])
+    }
+}
+
+impl PlgVector<PlgVariant> {
+    pub fn to_any(&self) -> Vec<PlgAny> {
+        self.as_slice()
+            .iter()
+            .map(|s| s.to_value())
+            .collect()
+    }
+}
+
+impl From<&[PlgAny]> for PlgVector<PlgVariant> {
+    fn from(data: &[PlgAny]) -> Self {
+        let views: Vec<PlgVariant> = data.iter()
+            .map(|s| PlgVariant::new(s))
+            .collect();
+        PlgVector::from_slice(&views)
+    }
+}
+
+impl From<Vec<PlgAny>> for PlgVector<PlgVariant> {
+    fn from(data: Vec<PlgAny>) -> Self {
         PlgVector::from(&data[..])
     }
 }
