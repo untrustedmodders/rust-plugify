@@ -489,6 +489,16 @@ impl<T: PlgVectorOps> PlgVector<T> {
     pub fn destroy(&mut self) {
         T::destroy(self);
     }
+
+    /// Used for const iteration
+    pub fn iter(&self) -> std::slice::Iter<'_, T> {
+        T::iter(self)
+    }
+
+    /// Used for mut iteration
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, T> {
+        T::iter_mut(self)
+    }
 }
 
 impl<T: PlgVectorOps> Index<usize> for PlgVector<T> {
@@ -500,7 +510,6 @@ impl<T: PlgVectorOps> Index<usize> for PlgVector<T> {
 }
 
 impl<T: PlgVectorOps> IndexMut<usize> for PlgVector<T> {
-
     fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
         &mut T::as_mut_slice(self)[idx]
     }
