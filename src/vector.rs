@@ -484,6 +484,7 @@ impl From<Vec<String>> for PlgVector<PlgString> {
 // Convenient From implementations
 // ============================================
 
+#[macro_export]
 macro_rules! impl_from_vec {
     ($t:ty) => {
         impl From<Vec<$t>> for PlgVector<$t> {
@@ -513,6 +514,7 @@ impl_from_vec!(Vector3);
 impl_from_vec!(Vector4);
 impl_from_vec!(Matrix4x4);
 
+#[macro_export]
 macro_rules! impl_from_slice {
     ($t:ty) => {
         impl From<&[$t]> for PlgVector<$t> {

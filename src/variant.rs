@@ -410,6 +410,7 @@ impl Drop for PlgVariant {
 // Convenient From implementations
 // ============================================
 
+#[macro_export]
 macro_rules! impl_from_primitive {
     ($rust_type:ty, $variant:ident) => {
         impl From<$rust_type> for PlgAny {
@@ -448,6 +449,7 @@ impl From<&str> for PlgAny {
     }
 }
 
+#[macro_export]
 macro_rules! impl_from_vec {
     ($t:ty, $variant:ident) => {
         impl From<Vec<$t>> for PlgAny {
