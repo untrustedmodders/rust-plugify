@@ -544,7 +544,7 @@ impl PlgVector<PlgVariant> {
     pub fn to_any(&self) -> Vec<PlgAny> {
         self.as_slice()
             .iter()
-            .map(|s| s.to_value())
+            .map(|s| s.get())
             .collect()
     }
 }

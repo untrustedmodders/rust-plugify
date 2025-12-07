@@ -273,7 +273,7 @@ pub extern "C" fn plugify_init(
         website: get_plugin_website(handle).to_string(),
         license: get_plugin_license(handle).to_string(),
         location: get_plugin_location(handle).to_string(),
-        dependencies: get_plugin_dependencies(handle).to_strings(),
+        dependencies: get_plugin_dependencies(handle).to_string(),
     }).expect("PLUGIN: can only be set once");
 
     let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::default());
