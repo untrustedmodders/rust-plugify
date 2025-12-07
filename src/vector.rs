@@ -1,4 +1,4 @@
-use std::ops::Index;
+use std::ops::{Index, IndexMut};
 use std::sync::OnceLock;
 use crate::{dynlink_impl, PlgString, PlgVariant, Vector2, Vector3, Vector4, Matrix4x4};
 
@@ -69,26 +69,26 @@ dynlink_impl!(get_vector_size_vector4, GET_VECTOR_SIZE_VECTOR4, init_get_vector_
 dynlink_impl!(get_vector_size_matrix4x4, GET_VECTOR_SIZE_MATRIX4X4, init_get_vector_size_matrix4x4, (vec: *const PlgVector<Matrix4x4>) -> usize);
 
 // Vector data getters
-dynlink_impl!(get_vector_data_bool, GET_VECTOR_DATA_BOOL, init_get_vector_data_bool, (vec: *const PlgVector<bool>) -> *const bool);
-dynlink_impl!(get_vector_data_char8, GET_VECTOR_DATA_CHAR8, init_get_vector_data_char8, (vec: *const PlgVector<i8>) -> *const i8);
-dynlink_impl!(get_vector_data_char16, GET_VECTOR_DATA_CHAR16, init_get_vector_data_char16, (vec: *const PlgVector<u16>) -> *const u16);
-dynlink_impl!(get_vector_data_int8, GET_VECTOR_DATA_INT8, init_get_vector_data_int8, (vec: *const PlgVector<i8>) -> *const i8);
-dynlink_impl!(get_vector_data_int16, GET_VECTOR_DATA_INT16, init_get_vector_data_int16, (vec: *const PlgVector<i16>) -> *const i16);
-dynlink_impl!(get_vector_data_int32, GET_VECTOR_DATA_INT32, init_get_vector_data_int32, (vec: *const PlgVector<i32>) -> *const i32);
-dynlink_impl!(get_vector_data_int64, GET_VECTOR_DATA_INT64, init_get_vector_data_int64, (vec: *const PlgVector<i64>) -> *const i64);
-dynlink_impl!(get_vector_data_uint8, GET_VECTOR_DATA_UINT8, init_get_vector_data_uint8, (vec: *const PlgVector<u8>) -> *const u8);
-dynlink_impl!(get_vector_data_uint16, GET_VECTOR_DATA_UINT16, init_get_vector_data_uint16, (vec: *const PlgVector<u16>) -> *const u16);
-dynlink_impl!(get_vector_data_uint32, GET_VECTOR_DATA_UINT32, init_get_vector_data_uint32, (vec: *const PlgVector<u32>) -> *const u32);
-dynlink_impl!(get_vector_data_uint64, GET_VECTOR_DATA_UINT64, init_get_vector_data_uint64, (vec: *const PlgVector<u64>) -> *const u64);
-dynlink_impl!(get_vector_data_pointer, GET_VECTOR_DATA_POINTER, init_get_vector_data_pointer, (vec: *const PlgVector<usize>) -> *const usize);
-dynlink_impl!(get_vector_data_float, GET_VECTOR_DATA_FLOAT, init_get_vector_data_float, (vec: *const PlgVector<f32>) -> *const f32);
-dynlink_impl!(get_vector_data_double, GET_VECTOR_DATA_DOUBLE, init_get_vector_data_double, (vec: *const PlgVector<f64>) -> *const f64);
-dynlink_impl!(get_vector_data_string, GET_VECTOR_DATA_STRING, init_get_vector_data_string, (vec: *const PlgVector<PlgString>) -> *const PlgString);
-dynlink_impl!(get_vector_data_variant, GET_VECTOR_DATA_VARIANT, init_get_vector_data_variant, (vec: *const PlgVector<PlgVariant>) -> *const PlgVariant);
-dynlink_impl!(get_vector_data_vector2, GET_VECTOR_DATA_VECTOR2, init_get_vector_data_vector2, (vec: *const PlgVector<Vector2>) -> *const Vector2);
-dynlink_impl!(get_vector_data_vector3, GET_VECTOR_DATA_VECTOR3, init_get_vector_data_vector3, (vec: *const PlgVector<Vector3>) -> *const Vector3);
-dynlink_impl!(get_vector_data_vector4, GET_VECTOR_DATA_VECTOR4, init_get_vector_data_vector4, (vec: *const PlgVector<Vector4>) -> *const Vector4);
-dynlink_impl!(get_vector_data_matrix4x4, GET_VECTOR_DATA_MATRIX4X4, init_get_vector_data_matrix4x4, (vec: *const PlgVector<Matrix4x4>) -> *const Matrix4x4);
+dynlink_impl!(get_vector_data_bool, GET_VECTOR_DATA_BOOL, init_get_vector_data_bool, (vec: *const PlgVector<bool>) -> *mut bool);
+dynlink_impl!(get_vector_data_char8, GET_VECTOR_DATA_CHAR8, init_get_vector_data_char8, (vec: *const PlgVector<i8>) -> *mut i8);
+dynlink_impl!(get_vector_data_char16, GET_VECTOR_DATA_CHAR16, init_get_vector_data_char16, (vec: *const PlgVector<u16>) -> *mut u16);
+dynlink_impl!(get_vector_data_int8, GET_VECTOR_DATA_INT8, init_get_vector_data_int8, (vec: *const PlgVector<i8>) -> *mut i8);
+dynlink_impl!(get_vector_data_int16, GET_VECTOR_DATA_INT16, init_get_vector_data_int16, (vec: *const PlgVector<i16>) -> *mut i16);
+dynlink_impl!(get_vector_data_int32, GET_VECTOR_DATA_INT32, init_get_vector_data_int32, (vec: *const PlgVector<i32>) -> *mut i32);
+dynlink_impl!(get_vector_data_int64, GET_VECTOR_DATA_INT64, init_get_vector_data_int64, (vec: *const PlgVector<i64>) -> *mut i64);
+dynlink_impl!(get_vector_data_uint8, GET_VECTOR_DATA_UINT8, init_get_vector_data_uint8, (vec: *const PlgVector<u8>) -> *mut u8);
+dynlink_impl!(get_vector_data_uint16, GET_VECTOR_DATA_UINT16, init_get_vector_data_uint16, (vec: *const PlgVector<u16>) -> *mut u16);
+dynlink_impl!(get_vector_data_uint32, GET_VECTOR_DATA_UINT32, init_get_vector_data_uint32, (vec: *const PlgVector<u32>) -> *mut u32);
+dynlink_impl!(get_vector_data_uint64, GET_VECTOR_DATA_UINT64, init_get_vector_data_uint64, (vec: *const PlgVector<u64>) -> *mut u64);
+dynlink_impl!(get_vector_data_pointer, GET_VECTOR_DATA_POINTER, init_get_vector_data_pointer, (vec: *const PlgVector<usize>) -> *mut usize);
+dynlink_impl!(get_vector_data_float, GET_VECTOR_DATA_FLOAT, init_get_vector_data_float, (vec: *const PlgVector<f32>) -> *mut f32);
+dynlink_impl!(get_vector_data_double, GET_VECTOR_DATA_DOUBLE, init_get_vector_data_double, (vec: *const PlgVector<f64>) -> *mut f64);
+dynlink_impl!(get_vector_data_string, GET_VECTOR_DATA_STRING, init_get_vector_data_string, (vec: *const PlgVector<PlgString>) -> *mut PlgString);
+dynlink_impl!(get_vector_data_variant, GET_VECTOR_DATA_VARIANT, init_get_vector_data_variant, (vec: *const PlgVector<PlgVariant>) -> *mut PlgVariant);
+dynlink_impl!(get_vector_data_vector2, GET_VECTOR_DATA_VECTOR2, init_get_vector_data_vector2, (vec: *const PlgVector<Vector2>) -> *mut Vector2);
+dynlink_impl!(get_vector_data_vector3, GET_VECTOR_DATA_VECTOR3, init_get_vector_data_vector3, (vec: *const PlgVector<Vector3>) -> *mut Vector3);
+dynlink_impl!(get_vector_data_vector4, GET_VECTOR_DATA_VECTOR4, init_get_vector_data_vector4, (vec: *const PlgVector<Vector4>) -> *mut Vector4);
+dynlink_impl!(get_vector_data_matrix4x4, GET_VECTOR_DATA_MATRIX4X4, init_get_vector_data_matrix4x4, (vec: *const PlgVector<Matrix4x4>) -> *mut Matrix4x4);
 
 // Vector assign
 dynlink_impl!(assign_vector_bool, ASSIGN_VECTOR_BOOL, init_assign_vector_bool, (vec: *mut PlgVector<bool>, data: *const bool, size: usize) -> ());
@@ -127,11 +127,12 @@ const _: () = assert!(size_of::<PlgVector<usize>>() == 3 * size_of::<*const ()>(
 
 /// Unified trait for all PlgVector operations
 pub trait PlgVectorOps: Sized {
-    fn construct(data: &[Self]) -> PlgVector<Self>;
+    fn new(data: &[Self]) -> PlgVector<Self>;
     fn destroy(vec: &mut PlgVector<Self>);
     fn len(vec: &PlgVector<Self>) -> usize;
     fn data(vec: &PlgVector<Self>) -> *const Self;
-    fn assign(vec: &mut PlgVector<Self>, data: &[Self]);
+    fn data_mut(vec: &PlgVector<Self>) -> *mut Self;
+    fn set(vec: &mut PlgVector<Self>, data: &[Self]);
 
     /// Get data as slice (zero-copy view)
     fn as_slice(vec: &PlgVector<Self>) -> &[Self] {
@@ -140,6 +141,16 @@ pub trait PlgVectorOps: Sized {
             if len == 0 { return &[]; }
             let data = Self::data(vec);
             std::slice::from_raw_parts(data, len)
+        }
+    }
+
+    /// Get data as mut slice (zero-copy view)
+    fn as_mut_slice(vec: &mut PlgVector<Self>) -> &mut [Self] {
+        unsafe {
+            let len = Self::len(vec);
+            if len == 0 { return &mut []; }
+            let data = Self::data_mut(vec);
+            std::slice::from_raw_parts_mut(data, len)
         }
     }
 
@@ -164,7 +175,7 @@ pub unsafe trait CEnumRepr: Sized + Copy {
 
 /// Automatic implementation of PlgVectorOps for enums that implement CEnumRepr
 impl<E: CEnumRepr> PlgVectorOps for E {
-    fn construct(data: &[Self]) -> PlgVector<Self> {
+    fn new(data: &[Self]) -> PlgVector<Self> {
         unsafe {
             // Cast enum slice to integer slice
             let int_data = std::slice::from_raw_parts(
@@ -172,7 +183,7 @@ impl<E: CEnumRepr> PlgVectorOps for E {
                 data.len()
             );
             // Construct vector using integer type's implementation
-            let int_vec = E::ReprInt::construct(int_data);
+            let int_vec = E::ReprInt::new(int_data);
             // Transmute the PlgVector<ReprInt> to PlgVector<E>
             std::mem::transmute(int_vec)
         }
@@ -200,14 +211,21 @@ impl<E: CEnumRepr> PlgVectorOps for E {
         }
     }
 
-    fn assign(vec: &mut PlgVector<Self>, data: &[Self]) {
+    fn data_mut(vec: &PlgVector<Self>) -> *mut Self {
+        unsafe {
+            let int_vec: &PlgVector<E::ReprInt> = std::mem::transmute(vec);
+            E::ReprInt::data(int_vec) as *mut Self
+        }
+    }
+
+    fn set(vec: &mut PlgVector<Self>, data: &[Self]) {
         unsafe {
             let int_vec: &mut PlgVector<E::ReprInt> = std::mem::transmute(vec);
             let int_data = std::slice::from_raw_parts(
                 data.as_ptr() as *const E::ReprInt,
                 data.len()
             );
-            E::ReprInt::assign(int_vec, int_data);
+            E::ReprInt::set(int_vec, int_data);
         }
     }
 }
@@ -223,7 +241,7 @@ macro_rules! vector_ops_traits {
         $assign:path
     ) => {
         impl PlgVectorOps for $t {
-            fn construct(data: &[Self]) -> PlgVector<$t> {
+            fn new(data: &[Self]) -> PlgVector<$t> {
                 $construct(data.as_ptr(), data.len())
             }
 
@@ -239,7 +257,11 @@ macro_rules! vector_ops_traits {
                 $data(vec)
             }
 
-            fn assign(vec: &mut PlgVector<$t>, data: &[Self]) {
+            fn data_mut(vec: &PlgVector<$t>) -> *mut Self {
+                $data(vec)
+            }
+
+            fn set(vec: &mut PlgVector<$t>, data: &[Self]) {
                 $assign(vec, data.as_ptr(), data.len())
             }
         }
@@ -415,7 +437,7 @@ vector_ops_traits!(
 impl<T: PlgVectorOps> PlgVector<T> {
     /// Construct a new PlgVector from a slice
     pub fn from_slice(data: &[T]) -> Self {
-        T::construct(data)
+        T::new(data)
     }
 
     /// Get the length of the vector
@@ -433,27 +455,54 @@ impl<T: PlgVectorOps> PlgVector<T> {
         T::as_slice(self)
     }
 
+    /// Get data as a slice (zero-copy view)
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
+        T::as_mut_slice(self)
+    }
+
     /// Get data as a Rust-owned Vec
     pub fn to_vec(&self) -> Vec<T> where T: Clone {
         T::to_vec(self)
     }
 
-    /// Assign new data to the vector
-    pub fn assign(&mut self, data: &[T]) {
-        T::assign(self, data);
+    /// Get data by index
+    pub fn get(&self, index: usize) -> Option<&T> {
+        T::as_slice(self).get(index)
+    }
+
+    /// Set new data to the vector
+    pub fn set(&mut self, data: &[T]) {
+        T::set(self, data);
     }
 
     /// Destroy the vector (manual cleanup)
     pub fn destroy(&mut self) {
         T::destroy(self);
     }
+
+    /// Used for const iteration
+    pub fn iter(&self) -> std::slice::Iter<'_, T> {
+        self.as_slice().iter()
+    }
+
+    /// Used for mut iteration
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, T> {
+        self.as_mut_slice().iter_mut()
+    }
 }
 
 impl<T: PlgVectorOps> Index<usize> for PlgVector<T> {
     type Output = T;
 
-    fn index(&self, index: usize) -> &T {
+    fn index(&self, index: usize) -> &Self::Output {
         &self.as_slice()[index]
+    }
+}
+
+impl<T: PlgVectorOps> IndexMut<usize> for PlgVector<T> {
+
+    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
+        &mut T::as_mut_slice(self)[idx]
     }
 }
 
