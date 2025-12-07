@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.0...plugify-v1.1.1) (2025-12-07)
+
+
+### Bug Fixes
+
+* add iter methods ([8b275a4](https://github.com/untrustedmodders/rust-plugify/commit/8b275a4ebc5e9f149dcced4058fdf0bc34c421ee))
+
 ## [1.1.0](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.0.9...plugify-v1.1.0) (2025-12-07)
 
 
