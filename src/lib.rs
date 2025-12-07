@@ -5,8 +5,7 @@ pub mod vector;
 pub use vector::PlgVector;
 
 pub mod variant;
-pub use variant::PlgVariant;
-pub use variant::PlgAny;
+pub use variant::{PlgVariant, PlgAny};
 
 pub mod mat4x4;
 pub use mat4x4::Matrix4x4;
@@ -20,7 +19,8 @@ pub use vec3::Vector3;
 pub mod vec4;
 pub use vec4::Vector4;
 
-mod plugin;
+pub mod plugin;
+pub use plugin::{on_plugin_start, on_plugin_end, on_plugin_update};
 
 #[macro_export]
 macro_rules! dynlink_impl {
