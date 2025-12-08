@@ -257,83 +257,83 @@ impl PlgVariant {
                 self.current = PlgType::Double;
             }
             PlgAny::String(v) => {
-                self.data.str = ManuallyDrop::new(PlgString::new(v));
+                self.data.str = ManuallyDrop::new(PlgString::from(v));
                 self.current = PlgType::String;
             }
             PlgAny::ArrayBool(v) => {
-                self.data.vec_bool = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_bool = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayBool;
             }
             PlgAny::ArrayChar8(v) => {
-                self.data.vec_c8 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_c8 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayChar8;
             }
             PlgAny::ArrayChar16(v) => {
-                self.data.vec_c16 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_c16 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayChar16;
             }
             PlgAny::ArrayInt8(v) => {
-                self.data.vec_i8 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_i8 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayInt8;
             }
             PlgAny::ArrayInt16(v) => {
-                self.data.vec_i16 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_i16 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayInt16;
             }
             PlgAny::ArrayInt32(v) => {
-                self.data.vec_i32 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_i32 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayInt32;
             }
             PlgAny::ArrayInt64(v) => {
-                self.data.vec_i64 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_i64 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayInt64;
             }
             PlgAny::ArrayUInt8(v) => {
-                self.data.vec_u8 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_u8 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayUInt8;
             }
             PlgAny::ArrayUInt16(v) => {
-                self.data.vec_u16 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_u16 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayUInt16;
             }
             PlgAny::ArrayUInt32(v) => {
-                self.data.vec_u32 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_u32 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayUInt32;
             }
             PlgAny::ArrayUInt64(v) => {
-                self.data.vec_u64 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_u64 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayUInt64;
             }
             PlgAny::ArrayPointer(v) => {
-                self.data.vec_usize = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_usize = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayPointer;
             }
             PlgAny::ArrayFloat(v) => {
-                self.data.vec_f32 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_f32 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayFloat;
             }
             PlgAny::ArrayDouble(v) => {
-                self.data.vec_f64 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_f64 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayDouble;
             }
             PlgAny::ArrayString(v) => {
-                self.data.vec_str = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_str = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayString;
             }
             PlgAny::ArrayVector2(v) => {
-                self.data.vec_vec2 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_vec2 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayVector2;
             }
             PlgAny::ArrayVector3(v) => {
-                self.data.vec_vec3 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_vec3 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayVector3;
             }
             PlgAny::ArrayVector4(v) => {
-                self.data.vec_vec4 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_vec4 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayVector4;
             }
             PlgAny::ArrayMatrix4x4(v) => {
-                self.data.vec_mat4x4 = ManuallyDrop::new(PlgVector::from(v.as_slice()));
+                self.data.vec_mat4x4 = ManuallyDrop::new(PlgVector::from(v));
                 self.current = PlgType::ArrayMatrix4x4;
             }
             PlgAny::Vector2(v) => {
@@ -480,8 +480,8 @@ variant_from_vec!(Vector4, ArrayVector4);
 variant_from_vec!(Matrix4x4, ArrayMatrix4x4);
 
 // PlgVariant From PlgAny
-impl From<PlgAny> for PlgVariant {
-    fn from(value: PlgAny) -> Self {
-        PlgVariant::new(&value)
+impl From<&PlgAny> for PlgVariant {
+    fn from(value: &PlgAny) -> Self {
+        PlgVariant::new(value)
     }
 }

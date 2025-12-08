@@ -445,6 +445,11 @@ vector_ops_traits!(
 // ============================================
 
 impl<T: PlgVectorOps> PlgVector<T> {
+    /// Construct a new PlgVector
+    pub fn new() -> Self {
+        T::new(&[])
+    }
+    
     /// Construct a new PlgVector from a slice
     pub fn from_slice(data: &[T]) -> Self {
         T::new(data)
@@ -537,15 +542,15 @@ impl PlgVector<PlgString> {
 impl From<&[String]> for PlgVector<PlgString> {
     fn from(data: &[String]) -> Self {
         let views: Vec<PlgString> = data.iter()
-            .map(|s| PlgString::new(s))
+            .map(|s| PlgString::from(s))
             .collect();
         PlgVector::from_slice(&views)
     }
 }
 
-impl From<Vec<String>> for PlgVector<PlgString> {
-    fn from(data: Vec<String>) -> Self {
-        PlgVector::from(&data[..])
+impl From<&Vec<String>> for PlgVector<PlgString> {
+    fn from(data: &Vec<String>) -> Self {
+        PlgVector::from(data.as_slice())
     }
 }
 
@@ -567,9 +572,9 @@ impl From<&[PlgAny]> for PlgVector<PlgVariant> {
     }
 }
 
-impl From<Vec<PlgAny>> for PlgVector<PlgVariant> {
-    fn from(data: Vec<PlgAny>) -> Self {
-        PlgVector::from(&data[..])
+impl From<&Vec<PlgAny>> for PlgVector<PlgVariant> {
+    fn from(data: &Vec<PlgAny>) -> Self {
+        PlgVector::from(data.as_slice())
     }
 }
 
@@ -580,9 +585,9 @@ impl From<Vec<PlgAny>> for PlgVector<PlgVariant> {
 #[macro_export]
 macro_rules! vector_from_vec {
     ($t:ty) => {
-        impl From<Vec<$t>> for PlgVector<$t> {
-            fn from(value: Vec<$t>) -> Self {
-                PlgVector::from_slice(&value)
+        impl From<&Vec<$t>> for PlgVector<$t> {
+            fn from(value: &Vec<$t>) -> Self {
+                PlgVector::from_slice(value.as_slice())
             }
         }
     };

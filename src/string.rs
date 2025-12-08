@@ -17,7 +17,11 @@ pub struct PlgString {
 const _: () = assert!(size_of::<PlgString>() == 3 * size_of::<*const ()>());
 
 impl PlgString {
-    pub fn new(s: &str) -> Self {
+    pub fn new() -> Self {
+        construct_string("".as_ptr(), 0)
+    }
+
+    pub fn from_str(s: &str) -> Self {
         construct_string(s.as_ptr(), s .len())
     }
 
@@ -73,12 +77,17 @@ impl Drop for PlgString {
 
 impl From<&str> for PlgString {
     fn from(s: &str) -> Self {
-        Self::new(s)
+        Self::from_str(s)
     }
 }
 
 impl From<String> for PlgString {
     fn from(s: String) -> Self {
-        Self::new(&s)
+        Self::from_str(s.as_str())
+    }
+}
+impl From<&String> for PlgString {
+    fn from(s: &String) -> Self {
+        Self::from_str(s.as_str())
     }
 }
