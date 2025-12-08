@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.1...plugify-v1.1.2) (2025-12-08)
+
+
+### Bug Fixes
+
+* add empty ctors ([8952d55](https://github.com/untrustedmodders/rust-plugify/commit/8952d55b187268499d874ea18bedae2d0687388f))
+
 ## [1.1.1](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.0...plugify-v1.1.1) (2025-12-07)
 
 
