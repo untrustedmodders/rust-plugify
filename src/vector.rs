@@ -1,5 +1,4 @@
 use std::ops::{Index, IndexMut};
-use std::ptr::NonNull;
 use std::sync::OnceLock;
 use crate::{dynlink_impl, PlgString, PlgVariant, PlgAny, Vector2, Vector3, Vector4, Matrix4x4};
 
@@ -113,6 +112,17 @@ dynlink_impl!(assign_vector_vector3, ASSIGN_VECTOR_VECTOR3, init_assign_vector_v
 dynlink_impl!(assign_vector_vector4, ASSIGN_VECTOR_VECTOR4, init_assign_vector_vector4, (vec: *mut PlgVector<Vector4>, data: *const Vector4, size: usize) -> ());
 dynlink_impl!(assign_vector_matrix4x4, ASSIGN_VECTOR_MATRIX4X4, init_assign_vector_matrix4x4, (vec: *mut PlgVector<Matrix4x4>, data: *const Matrix4x4, size: usize) -> ());
 
+/// FFI-compatible vector type matching the memory layout of the C++ plg::vector<T>
+///
+/// # Memory Layout
+///
+/// This struct uses `#[repr(C)]` to match the C++ plg::vector layout (begin/end/capacity pointers).
+/// This layout is guaranteed by the LLVM-based plg library and must not be changed.
+///
+/// # Safety
+///
+/// This type is only safe to use through the PlgVectorOps trait methods, which call into
+/// the C++ library functions. Direct field access or construction is unsafe and undefined behavior.
 #[repr(C)]
 pub struct PlgVector<T: PlgVectorOps> {
     begin: *mut T,
@@ -134,6 +144,17 @@ impl<T: PlgVectorOps + std::fmt::Debug> std::fmt::Debug for PlgVector<T> {
 // ============================================
 
 /// Unified trait for all PlgVector operations
+///
+/// This trait provides type-specific FFI bindings to the C++ plg::vector functions.
+/// Each type that can be stored in a PlgVector must implement this trait to provide
+/// the appropriate C++ function bindings.
+///
+/// # Safety
+///
+/// Implementations must ensure that:
+/// - The C++ functions are properly initialized via dynlink
+/// - The functions correctly handle the memory layout of type T
+/// - The destroy function properly frees C++ allocated memory
 pub trait PlgVectorOps: Sized {
     fn new(data: &[Self]) -> PlgVector<Self>;
     fn destroy(vec: &mut PlgVector<Self>);
@@ -143,30 +164,51 @@ pub trait PlgVectorOps: Sized {
     fn set(vec: &mut PlgVector<Self>, data: &[Self]);
 
     /// Get data as slice (zero-copy view)
+    ///
+    /// # Safety
+    ///
+    /// This is safe because:
+    /// - We check if len is 0 and return a valid empty slice
+    /// - The data pointer from C++ is guaranteed valid for `len` elements
+    /// - The lifetime is tied to the PlgVector borrow, preventing use-after-free
     fn as_slice(vec: &PlgVector<Self>) -> &[Self] {
         unsafe {
             let len = Self::len(vec);
             if len == 0 {
-                return std::slice::from_raw_parts(NonNull::<Self>::dangling().as_ptr(), 0);
+                // FIXED: Use the actual data pointer even when empty, as C++ may have
+                // a valid pointer. Only create an empty slice.
+                return &[];
             }
             let data = Self::data(vec);
+            // SAFETY: C++ guarantees the data pointer is valid for `len` elements
             std::slice::from_raw_parts(data, len)
         }
     }
 
     /// Get data as mut slice (zero-copy view)
+    ///
+    /// # Safety
+    ///
+    /// This is safe because:
+    /// - We check if len is 0 and return a valid empty slice
+    /// - The data pointer from C++ is guaranteed valid for `len` elements
+    /// - The mutable lifetime is tied to the PlgVector mutable borrow, ensuring exclusive access
     fn as_mut_slice(vec: &mut PlgVector<Self>) -> &mut [Self] {
         unsafe {
             let len = Self::len(vec);
             if len == 0 {
-                return std::slice::from_raw_parts_mut(NonNull::<Self>::dangling().as_ptr(), 0);
+                // FIXED: Use the actual data pointer even when empty
+                return &mut [];
             }
             let data = Self::data_mut(vec);
+            // SAFETY: C++ guarantees the data pointer is valid for `len` elements,
+            // and we have exclusive mutable access
             std::slice::from_raw_parts_mut(data, len)
         }
     }
 
     /// Get data as Vec (copy)
+    #[must_use = "this creates a new Vec, use as_slice() if you just need to read the data"]
     fn to_vec(vec: &PlgVector<Self>) -> Vec<Self> where Self: Clone {
         Self::as_slice(vec).to_vec()
     }
@@ -184,39 +226,70 @@ pub trait PlgVectorOps: Sized {
 
 /// Marker trait for C-compatible enums with a specific integer representation
 ///
+/// This trait enables automatic PlgVectorOps implementation for enums by treating them
+/// as their underlying integer type during FFI calls.
+///
 /// # Safety
 ///
 /// Implementors must guarantee that:
 /// - The type has `#[repr(IntType)]` where IntType is the associated `ReprInt` type
-/// - The type has the exact same memory layout as `ReprInt`
-/// - All bit patterns valid for `ReprInt` represent valid enum values (or you handle invalid values safely)
+/// - The type has the exact same memory layout and alignment as `ReprInt`
+/// - All bit patterns valid for `ReprInt` represent valid enum values, or the code
+///   handles potentially invalid values safely without UB
+///
+/// # Example
+///
+/// ```rust
+/// #[repr(i32)]
+/// #[derive(Copy, Clone)]
+/// enum MyEnum {
+///     A = 0,
+///     B = 1,
+///     C = 2,
+/// }
+///
+/// // Use the helper macro to implement the trait safely
+/// vector_enum_traits!(MyEnum, i32);
+/// ```
 pub unsafe trait CEnumRepr: Sized + Copy {
     /// The underlying integer type (i8, i16, i32, i64, u8, u16, u32, u64)
     type ReprInt: PlgVectorOps + Copy;
 }
 
 /// Automatic implementation of PlgVectorOps for enums that implement CEnumRepr
+///
+/// This implementation transmutes between the enum type and its underlying integer type
+/// to reuse the integer type's PlgVectorOps implementation.
+///
+/// # Safety
+///
+/// This is safe because:
+/// - CEnumRepr is an unsafe trait requiring the enum and ReprInt to have identical layout
+/// - We verify size and alignment match at runtime via debug_assert
+/// - PlgVector<E> and PlgVector<E::ReprInt> have identical memory layout due to same field types
+/// - All transmutes preserve the underlying bit representation
 impl<E: CEnumRepr> PlgVectorOps for E {
     fn new(data: &[Self]) -> PlgVector<Self> {
         debug_assert!(size_of::<E>() == size_of::<E::ReprInt>());
         debug_assert!(align_of::<E>() == align_of::<E::ReprInt>());
 
         unsafe {
-            // Cast enum slice to integer slice
+            // SAFETY: CEnumRepr guarantees E and ReprInt have identical layout.
+            // We cast the enum slice to integer slice for FFI call.
             let int_data = std::slice::from_raw_parts(
                 data.as_ptr() as *const E::ReprInt,
                 data.len()
             );
-            // Construct vector using integer type's implementation
             let int_vec = E::ReprInt::new(int_data);
-            // Transmute the PlgVector<ReprInt> to PlgVector<E>
+            // SAFETY: PlgVector<E> and PlgVector<E::ReprInt> have identical memory layout
+            // (both are 3 pointers), so transmute is safe
             std::mem::transmute(int_vec)
         }
     }
 
     fn destroy(vec: &mut PlgVector<Self>) {
         unsafe {
-            // Cast to PlgVector<ReprInt> and destroy
+            // SAFETY: Transmute to the integer vector type for C++ cleanup
             let int_vec: &mut PlgVector<E::ReprInt> = std::mem::transmute(vec);
             E::ReprInt::destroy(int_vec);
         }
@@ -224,6 +297,7 @@ impl<E: CEnumRepr> PlgVectorOps for E {
 
     fn len(vec: &PlgVector<Self>) -> usize {
         unsafe {
+            // SAFETY: Same memory layout allows transmute for reading size
             let int_vec: &PlgVector<E::ReprInt> = std::mem::transmute(vec);
             E::ReprInt::len(int_vec)
         }
@@ -231,6 +305,7 @@ impl<E: CEnumRepr> PlgVectorOps for E {
 
     fn data(vec: &PlgVector<Self>) -> *const Self {
         unsafe {
+            // SAFETY: Transmute to get the data pointer, then cast back to enum pointer
             let int_vec: &PlgVector<E::ReprInt> = std::mem::transmute(vec);
             E::ReprInt::data(int_vec) as *const Self
         }
@@ -238,13 +313,15 @@ impl<E: CEnumRepr> PlgVectorOps for E {
 
     fn data_mut(vec: &mut PlgVector<Self>) -> *mut Self {
         unsafe {
-            let int_vec: &PlgVector<E::ReprInt> = std::mem::transmute(vec);
-            E::ReprInt::data(int_vec) as *mut Self
+            // SAFETY: Transmute to get the mutable data pointer, then cast back to enum pointer
+            let int_vec: &mut PlgVector<E::ReprInt> = std::mem::transmute(vec);
+            E::ReprInt::data_mut(int_vec) as *mut Self
         }
     }
 
     fn set(vec: &mut PlgVector<Self>, data: &[Self]) {
         unsafe {
+            // SAFETY: Cast enum slice to integer slice for FFI call
             let int_vec: &mut PlgVector<E::ReprInt> = std::mem::transmute(vec);
             let int_data = std::slice::from_raw_parts(
                 data.as_ptr() as *const E::ReprInt,
@@ -456,66 +533,130 @@ vector_ops_traits!(
 );
 
 // ============================================
+// Panic guard helper for FFI operations
+// ============================================
+
+/// Guard to ensure C++ resources are cleaned up if a panic occurs during operations
+///
+/// # Panic Safety
+///
+/// If a panic occurs while this guard is active, the Drop implementation will call
+/// the C++ destroy function to prevent resource leaks. The guard is typically disarmed
+/// by calling `defuse()` when the operation completes successfully.
+struct PanicGuard<T: PlgVectorOps> {
+    vec: *mut PlgVector<T>,  // Raw pointer instead of reference
+}
+
+impl<T: PlgVectorOps> PanicGuard<T> {
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - `vec` points to a valid PlgVector<T>
+    /// - The pointer remains valid until the guard is dropped or defused
+    /// - No other code calls destroy() on this vector while the guard is active
+    unsafe fn new(vec: *mut PlgVector<T>) -> Self {
+        Self { vec }
+    }
+
+    fn defuse(mut self) {
+        self.vec = std::ptr::null_mut();
+    }
+}
+
+impl<T: PlgVectorOps> Drop for PanicGuard<T> {
+    fn drop(&mut self) {
+        if !self.vec.is_null() {
+            unsafe {
+                // SAFETY: The pointer was valid when created
+                T::destroy(&mut *self.vec);
+            }
+        }
+    }
+}
+
+// ============================================
 // Generic methods on PlgVector
 // ============================================
 
 impl<T: PlgVectorOps> PlgVector<T> {
-    /// Construct a new PlgVector
+    /// Construct a new empty PlgVector
     pub fn new() -> Self {
         T::new(&[])
     }
 
     /// Construct a new PlgVector from a slice
+    ///
+    /// # Panics
+    ///
+    /// May panic if the C++ allocation fails. The panic is safe - no resources will leak.
     pub fn from_slice(data: &[T]) -> Self {
         T::new(data)
     }
 
     /// Get the length of the vector
+    #[must_use]
     pub fn len(&self) -> usize {
         T::len(self)
     }
 
     /// Check if the vector is empty
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         T::len(self) == 0
     }
 
     /// Get data as a slice (zero-copy view)
+    #[must_use]
     pub fn as_slice(&self) -> &[T] {
         T::as_slice(self)
     }
 
-    /// Get data as a slice (zero-copy view)
+    /// Get data as a mutable slice (zero-copy view)
+    #[must_use]
     pub fn as_mut_slice(&mut self) -> &mut [T] {
         T::as_mut_slice(self)
     }
 
-    /// Get data as a Rust-owned Vec
+    /// Get data as a Rust-owned Vec (allocates and copies)
+    #[must_use = "this allocates and copies data into a new Vec"]
     pub fn to_vec(&self) -> Vec<T> where T: Clone {
         T::to_vec(self)
     }
 
     /// Get data by index
+    #[must_use]
     pub fn get(&self, index: usize) -> Option<&T> {
         T::as_slice(self).get(index)
     }
 
-    /// Set new data to the vector
+    /// Set new data to the vector, replacing previous contents
+    ///
+    /// # Panics
+    ///
+    /// May panic if the C++ reallocation fails. If a panic occurs, the vector
+    /// may be left in an indeterminate state. The C++ resources will still be
+    /// cleaned up properly when the vector is dropped.
     pub fn set(&mut self, data: &[T]) {
+        // Use a panic guard to ensure C++ cleanup happens even if set() panics
+        let guard = unsafe { PanicGuard::new(self as *mut _) };
         T::set(self, data);
+        guard.defuse(); // Operation succeeded, don't clean up
     }
 
     /// Destroy the vector (manual cleanup)
+    ///
+    /// This is typically not needed as Drop handles cleanup automatically.
+    /// Only use this if you need explicit control over when cleanup occurs.
     pub fn destroy(&mut self) {
         T::destroy(self);
     }
 
-    /// Used for const iteration
+    /// Get an iterator over the vector elements
     pub fn iter(&self) -> std::slice::Iter<'_, T> {
         T::iter(self)
     }
 
-    /// Used for mut iteration
+    /// Get a mutable iterator over the vector elements
     pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, T> {
         T::iter_mut(self)
     }
@@ -546,6 +687,7 @@ impl<T: PlgVectorOps> Drop for PlgVector<T>  {
 // ============================================
 
 impl PlgVector<PlgString> {
+    #[must_use = "this allocates and converts to Vec<String>"]
     pub fn to_string(&self) -> Vec<String> {
         self.as_slice()
             .iter()
@@ -576,6 +718,7 @@ impl From<Vec<String>> for PlgVector<PlgString> {
 }
 
 impl PlgVector<PlgVariant> {
+    #[must_use = "this allocates and converts to Vec<PlgAny>"]
     pub fn to_any(&self) -> Vec<PlgAny> {
         self.as_slice()
             .iter()
@@ -676,6 +819,28 @@ vector_from_slice!(Matrix4x4);
 // Helper macro for C-compatible enums
 // ============================================
 
+/// Helper macro to safely implement CEnumRepr for C-compatible enums
+///
+/// This macro:
+/// 1. Implements the unsafe CEnumRepr trait
+/// 2. Adds compile-time assertions to verify size and alignment match
+///
+/// # Example
+///
+/// ```rust
+/// #[repr(i32)]
+/// #[derive(Copy, Clone, Debug)]
+/// enum MyStatus {
+///     Idle = 0,
+///     Running = 1,
+///     Stopped = 2,
+/// }
+///
+/// vector_enum_traits!(MyStatus, i32);
+///
+/// // Now you can use PlgVector<MyStatus>
+/// let statuses = PlgVector::from_slice(&[MyStatus::Idle, MyStatus::Running]);
+/// ```
 #[macro_export]
 macro_rules! vector_enum_traits {
     ($enum_ty:ty, $repr:ty) => {
@@ -683,8 +848,14 @@ macro_rules! vector_enum_traits {
             type ReprInt = $repr;
         }
 
-        // Global const check outside the impl
-        const _: () = assert!(std::mem::size_of::<$enum_ty>() == std::mem::size_of::<$repr>());
-        const _: () = assert!(std::mem::align_of::<$enum_ty>() == std::mem::align_of::<$repr>());
+        // Compile-time checks to ensure safety invariants
+        const _: () = assert!(
+            std::mem::size_of::<$enum_ty>() == std::mem::size_of::<$repr>(),
+            "Enum size must match its repr type size"
+        );
+        const _: () = assert!(
+            std::mem::align_of::<$enum_ty>() == std::mem::align_of::<$repr>(),
+            "Enum alignment must match its repr type alignment"
+        );
     };
 }

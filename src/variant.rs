@@ -73,9 +73,19 @@ pub enum PlgType {
     //Matrix4x3,
 }
 
-// Union matching C layout
+/// Union containing all possible variant data types
+///
+/// # Safety
+///
+/// This is a C-compatible union. Only the field corresponding to the `PlgType`
+/// discriminant in `PlgVariant::current` may be accessed. Accessing the wrong
+/// field is undefined behavior.
+///
+/// Fields wrapped in `ManuallyDrop` must be manually dropped when the variant
+/// is destroyed - this is handled by the C++ `destroy_variant` function.
 #[repr(C)]
 union PlgVariantData {
+    // Scalar types (Copy, no Drop)
     boolean: bool,
     char8: i8,
     char16: u16,
@@ -90,6 +100,8 @@ union PlgVariantData {
     ptr: usize,
     flt: f32,
     dbl: f64,
+
+    // Owned types (require Drop, wrapped in ManuallyDrop)
     str: ManuallyDrop<PlgString>,
     vec_bool: ManuallyDrop<PlgVector<bool>>,
     vec_c8: ManuallyDrop<PlgVector<i8>>,
@@ -110,16 +122,51 @@ union PlgVariantData {
     vec_vec3: ManuallyDrop<PlgVector<Vector3>>,
     vec_vec4: ManuallyDrop<PlgVector<Vector4>>,
     vec_mat4x4: ManuallyDrop<PlgVector<Matrix4x4>>,
+
+    // Vector types (Copy, no Drop)
     vec2: Vector2,
     vec3: Vector3,
     vec4: Vector4,
 }
 
+/// FFI-compatible variant type matching the memory layout of C++ plg::variant
+///
+/// # Memory Layout
+///
+/// ```text
+/// [data: 24 bytes union] [pad: 8 bytes on 32-bit] [type: 1 byte PlgType]
+/// Total: 32 bytes
+/// ```
+///
+/// The padding on 32-bit architectures ensures the struct is 32 bytes to match
+/// the C++ layout, which likely uses alignment requirements or explicit padding.
+///
+/// # Type Safety Invariant
+///
+/// **CRITICAL**: The `current` field MUST always accurately reflect which union field
+/// is active. Accessing a union field that doesn't match `current` is undefined behavior.
+/// This invariant is maintained by:
+/// - Only setting union fields through `construct()`
+/// - Always updating `current` atomically with union field assignment
+/// - Calling `destroy()` before changing types
+///
+/// # Ownership Contract
+///
+/// - PlgVariant owns the data in its union
+/// - Fields wrapped in `ManuallyDrop` have their cleanup handled by C++ `destroy_variant`
+/// - Must call `destroy()` exactly once (handled automatically by Drop)
+/// - After `destroy()`, the variant is in an invalid state until reconstructed
+///
+/// # Safety
+///
+/// This type is only safe to use through its public API. Direct field access is unsafe.
 #[repr(C)]
 pub struct PlgVariant {
     data: PlgVariantData,
+    /// Padding to ensure 32-byte alignment on 32-bit architectures
     #[cfg(target_pointer_width = "32")]
     pad: [u8; 8],
+    /// Type discriminant - indicates which union field is currently active
     current: PlgType,
 }
 const _: () = assert!(size_of::<PlgVariant>() == 32);
@@ -137,6 +184,10 @@ impl std::fmt::Debug for PlgVariant {
 // Rust-native value type (similar to Go's `any`)
 // ============================================
 
+/// Rust-native variant type that owns its data
+///
+/// This is a safe Rust enum that can hold any of the variant types.
+/// Use this for Rust code; it converts to/from PlgVariant for FFI.
 #[derive(Debug, Clone)]
 pub enum PlgAny {
     Invalid,
@@ -177,7 +228,58 @@ pub enum PlgAny {
     Vector2(Vector2),
     Vector3(Vector3),
     Vector4(Vector4),
-    //Matrix4x4(Matrix4x4),
+}
+
+// ============================================
+// Panic guard helper for FFI operations
+// ============================================
+
+/// Guard to ensure C++ resources are cleaned up if a panic occurs during construction
+///
+/// # Panic Safety
+///
+/// If a panic occurs while constructing a variant (e.g., during PlgVector allocation),
+/// the Drop implementation will call the C++ destroy function to prevent resource leaks.
+///
+/// # Implementation Note
+///
+/// Uses raw pointers instead of references to avoid borrow checker conflicts when
+/// the guarded resource needs to be used after guard creation.
+struct PanicGuard {
+    variant: *mut PlgVariant,
+}
+
+impl PanicGuard {
+    /// Create a new panic guard
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that:
+    /// - `variant` points to a valid PlgVariant
+    /// - The pointer remains valid until the guard is dropped or defused
+    /// - No other code calls destroy() on this variant while the guard is active
+    unsafe fn new(variant: *mut PlgVariant) -> Self {
+        Self { variant }
+    }
+
+    /// Disarm the guard - call this when the operation completes successfully
+    fn defuse(mut self) {
+        self.variant = std::ptr::null_mut();
+    }
+}
+
+impl Drop for PanicGuard {
+    fn drop(&mut self) {
+        if !self.variant.is_null() {
+            // If we're dropping due to a panic, clean up the C++ resource
+            unsafe {
+                // SAFETY: The pointer was valid when created and we haven't moved the variant
+                destroy_variant(&mut *self.variant);
+                // Reset to invalid state
+                (*self.variant).current = PlgType::Invalid;
+            }
+        }
+    }
 }
 
 // ============================================
@@ -185,6 +287,12 @@ pub enum PlgAny {
 // ============================================
 
 impl PlgVariant {
+    /// Create a new PlgVariant from a PlgAny value
+    ///
+    /// # Panics
+    ///
+    /// May panic if C++ allocation fails (e.g., for String or Vector types).
+    /// The panic is safe - no resources will leak.
     pub fn new(value: &PlgAny) -> Self {
         let mut variant = PlgVariant {
             data: PlgVariantData { int64: 0 },
@@ -196,19 +304,41 @@ impl PlgVariant {
         variant
     }
 
-    pub fn construct(&mut self, value: &PlgAny) {
+    /// Construct the variant from a PlgAny value
+    ///
+    /// # Safety
+    ///
+    /// IMPORTANT: This method does NOT destroy existing data first.
+    /// Callers must ensure the variant is in the Invalid state or has been
+    /// properly destroyed before calling this.
+    ///
+    /// # Panics
+    ///
+    /// May panic during allocation of owned types (String, Vectors).
+    /// If a panic occurs, the PanicGuard will clean up any partially
+    /// constructed resources.
+    fn construct(&mut self, value: &PlgAny) {
+        // Panic guard to ensure cleanup if allocation fails
+        let guard = unsafe { PanicGuard::new(self as *mut _) };
+
+        /// Macro to assign scalar (Copy) types to the union
         macro_rules! assign_scalar {
             ($field:ident, $variant:expr, $type:expr) => {
                 {
+                    // SAFETY: We're setting both the union field and discriminant atomically.
+                    // Scalar types are Copy and don't need Drop.
                     self.data.$field = *$variant;
                     self.current = $type;
                 }
             };
         }
 
+        /// Macro to assign owned (non-Copy) types to the union
         macro_rules! assign_owned {
             ($field:ident, $variant:expr, $type:expr) => {
                 {
+                    // SAFETY: We're setting both the union field and discriminant atomically.
+                    // ManuallyDrop prevents automatic Drop; cleanup is handled by C++.
                     self.data.$field = ManuallyDrop::new($variant);
                     self.current = $type;
                 }
@@ -255,17 +385,44 @@ impl PlgVariant {
             PlgAny::Vector3(v) => assign_scalar!(vec3, v, PlgType::Vector3),
             PlgAny::Vector4(v) => assign_scalar!(vec4, v, PlgType::Vector4),
         }
+
+        // Operation succeeded, disarm the panic guard
+        guard.defuse();
     }
 
-    pub fn set(&mut self, value: &PlgAny){
+    /// Set the variant to a new value, destroying the old value first
+    ///
+    /// This is the safe way to change a variant's value - it properly destroys
+    /// the old data before constructing the new data.
+    ///
+    /// # Panics
+    ///
+    /// May panic if C++ allocation fails. If a panic occurs during construction,
+    /// the old value will have been destroyed but the new value won't be set,
+    /// leaving the variant in the Invalid state.
+    pub fn set(&mut self, value: &PlgAny) {
+        // FIXED: Destroy existing data BEFORE constructing new data
+        // This prevents memory leaks if the variant already holds data
         self.destroy();
         self.construct(value);
     }
 
+    /// Get the current value as a PlgAny (allocates and copies)
+    ///
+    /// # Safety
+    ///
+    /// This is safe because:
+    /// - We match on `current` to determine which union field to access
+    /// - The type invariant guarantees `current` matches the active union field
+    /// - We copy/clone the data, so the original remains valid
+    #[must_use = "this allocates and copies data into a new PlgAny"]
     pub fn get(&self) -> PlgAny {
         unsafe {
             match self.current {
                 PlgType::Invalid => PlgAny::Invalid,
+
+                // Scalar types: direct copy (they're Copy)
+                // SAFETY: current == PlgType::X means data.x is the active field
                 PlgType::Bool => PlgAny::Bool(self.data.boolean),
                 PlgType::Char8 => PlgAny::Char8(self.data.char8),
                 PlgType::Char16 => PlgAny::Char16(self.data.char16),
@@ -280,6 +437,9 @@ impl PlgVariant {
                 PlgType::Pointer => PlgAny::Pointer(self.data.ptr),
                 PlgType::Float => PlgAny::Float(self.data.flt),
                 PlgType::Double => PlgAny::Double(self.data.dbl),
+
+                // Owned types: convert to owned Rust types
+                // SAFETY: ManuallyDrop doesn't affect reading; we clone/convert the data
                 PlgType::String => PlgAny::String(self.data.str.as_str().to_string()),
                 PlgType::ArrayBool => PlgAny::ArrayBool(self.data.vec_bool.to_vec()),
                 PlgType::ArrayChar8 => PlgAny::ArrayChar8(self.data.vec_c8.to_vec()),
@@ -287,7 +447,7 @@ impl PlgVariant {
                 PlgType::ArrayInt8 => PlgAny::ArrayInt8(self.data.vec_i8.to_vec()),
                 PlgType::ArrayInt16 => PlgAny::ArrayInt16(self.data.vec_i16.to_vec()),
                 PlgType::ArrayInt32 => PlgAny::ArrayInt32(self.data.vec_i32.to_vec()),
-                PlgType::ArrayInt64 =>  PlgAny::ArrayInt64(self.data.vec_i64.to_vec()),
+                PlgType::ArrayInt64 => PlgAny::ArrayInt64(self.data.vec_i64.to_vec()),
                 PlgType::ArrayUInt8 => PlgAny::ArrayUInt8(self.data.vec_u8.to_vec()),
                 PlgType::ArrayUInt16 => PlgAny::ArrayUInt16(self.data.vec_u16.to_vec()),
                 PlgType::ArrayUInt32 => PlgAny::ArrayUInt32(self.data.vec_u32.to_vec()),
@@ -300,25 +460,42 @@ impl PlgVariant {
                 PlgType::ArrayVector3 => PlgAny::ArrayVector3(self.data.vec_vec3.to_vec()),
                 PlgType::ArrayVector4 => PlgAny::ArrayVector4(self.data.vec_vec4.to_vec()),
                 PlgType::ArrayMatrix4x4 => PlgAny::ArrayMatrix4x4(self.data.vec_mat4x4.to_vec()),
+
+                // Vector types: direct copy (they're Copy)
                 PlgType::Vector2 => PlgAny::Vector2(self.data.vec2),
                 PlgType::Vector3 => PlgAny::Vector3(self.data.vec3),
                 PlgType::Vector4 => PlgAny::Vector4(self.data.vec4),
+
+                // Unknown/unhandled types
                 _ => PlgAny::Invalid,
             }
         }
     }
 
+    /// Get the current type of the variant
+    #[must_use]
     pub fn current(&self) -> PlgType {
         self.current
     }
 
+    /// Destroy the variant (manual cleanup)
+    ///
+    /// This calls the C++ destroy function to free any owned resources.
+    /// After calling this, the variant is in an invalid state until reconstructed.
+    ///
+    /// This is typically not needed as Drop handles cleanup automatically.
+    /// Only use this if you need explicit control over when cleanup occurs.
     pub fn destroy(&mut self) {
         destroy_variant(self);
+        // After destruction, mark as invalid to prevent accidental reuse
+        self.current = PlgType::Invalid;
     }
 }
 
 impl Drop for PlgVariant {
-    fn drop(&mut self) { self.destroy(); }
+    fn drop(&mut self) {
+        self.destroy();
+    }
 }
 
 impl Clone for PlgVariant {
@@ -385,7 +562,6 @@ macro_rules! variant_from_vec {
     };
 }
 
-// Usage
 variant_from_vec!(bool, ArrayBool);
 variant_from_vec!(i8, ArrayInt8);
 variant_from_vec!(i16, ArrayInt16);
