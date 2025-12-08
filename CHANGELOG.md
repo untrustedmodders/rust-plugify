@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.5](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.4...plugify-v1.1.5) (2025-12-08)
+
+
+### Bug Fixes
+
+* add export/import symbol macros ([6e9340a](https://github.com/untrustedmodders/rust-plugify/commit/6e9340a34507b3df1e43ab233df06a6e479b4a39))
+
 ## [1.1.4](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.3...plugify-v1.1.4) (2025-12-08)
 
 
