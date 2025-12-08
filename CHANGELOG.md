@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.4](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.3...plugify-v1.1.4) (2025-12-08)
+
+
+### Bug Fixes
+
+* **claude:** add more documentation ([f1cfd72](https://github.com/untrustedmodders/rust-plugify/commit/f1cfd72f405584ec1b26c485d0d421a6d8182bd7))
+* remove guards ([3c33e1b](https://github.com/untrustedmodders/rust-plugify/commit/3c33e1bbbb9654a6ba96af8bcd55f66a082166f8))
+* some improvements of containers ([ce3f9eb](https://github.com/untrustedmodders/rust-plugify/commit/ce3f9eb3075f6c74806492070df24bd3389a30e8))
+
 ## [1.1.3](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.2...plugify-v1.1.3) (2025-12-08)
 
 
