@@ -1,12 +1,12 @@
 use std::sync::OnceLock;
 use std::ops::Deref;
-use crate::dynlink_impl;
+use crate::import_symbol;
 
-dynlink_impl!(construct_string, CONSTRUCT_STRING, init_construct_string, (data:*const u8, size:usize) -> PlgString);
-dynlink_impl!(destroy_string, DESTROY_STRING, init_destroy_string, (str:*mut PlgString) -> ());
-dynlink_impl!(get_string_data, GET_STRING_DATA, init_get_string_data, (str:*const PlgString) -> *mut u8);
-dynlink_impl!(get_string_length, GET_STRING_LENGTH, init_get_string_length, (str:*const PlgString) -> usize);
-dynlink_impl!(assign_string, ASSIGN_STRING, init_assign_string, (str:*mut PlgString, data:*const u8, size:usize) -> ());
+import_symbol!(construct_string, CONSTRUCT_STRING, init_construct_string, (data:*const u8, size:usize) -> PlgString);
+import_symbol!(destroy_string, DESTROY_STRING, init_destroy_string, (str:*mut PlgString) -> ());
+import_symbol!(get_string_data, GET_STRING_DATA, init_get_string_data, (str:*const PlgString) -> *mut u8);
+import_symbol!(get_string_length, GET_STRING_LENGTH, init_get_string_length, (str:*const PlgString) -> usize);
+import_symbol!(assign_string, ASSIGN_STRING, init_assign_string, (str:*mut PlgString, data:*const u8, size:usize) -> ());
 
 /// FFI-compatible string type matching the memory layout of the C++ plg::string
 ///

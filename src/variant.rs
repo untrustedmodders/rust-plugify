@@ -1,8 +1,8 @@
 use std::mem::{ManuallyDrop};
 use std::sync::OnceLock;
-use crate::{dynlink_impl, PlgString, PlgVector, Vector2, Vector3, Vector4, Matrix4x4};
+use crate::{import_symbol, PlgString, PlgVector, Vector2, Vector3, Vector4, Matrix4x4};
 
-dynlink_impl!(destroy_variant, DESTROY_VARIANT, init_destroy_variant, (variant: *mut PlgVariant) -> ());
+import_symbol!(destroy_variant, DESTROY_VARIANT, init_destroy_variant, (variant: *mut PlgVariant) -> ());
 
 // Variant type enum
 #[repr(u8)]
