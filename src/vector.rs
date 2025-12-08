@@ -1,4 +1,5 @@
 use std::ops::{Index, IndexMut};
+use std::ptr::NonNull;
 use std::sync::OnceLock;
 use crate::{dynlink_impl, PlgString, PlgVariant, PlgAny, Vector2, Vector3, Vector4, Matrix4x4};
 
@@ -113,13 +114,20 @@ dynlink_impl!(assign_vector_vector4, ASSIGN_VECTOR_VECTOR4, init_assign_vector_v
 dynlink_impl!(assign_vector_matrix4x4, ASSIGN_VECTOR_MATRIX4X4, init_assign_vector_matrix4x4, (vec: *mut PlgVector<Matrix4x4>, data: *const Matrix4x4, size: usize) -> ());
 
 #[repr(C)]
-#[derive(Debug)]
 pub struct PlgVector<T: PlgVectorOps> {
-    pub begin: *mut T,
-    pub end: *mut T,
-    pub capacity: *mut T,
+    begin: *mut T,
+    end: *mut T,
+    capacity: *mut T,
 }
 const _: () = assert!(size_of::<PlgVector<usize>>() == 3 * size_of::<*const ()>());
+
+impl<T: PlgVectorOps + std::fmt::Debug> std::fmt::Debug for PlgVector<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_list()
+            .entries(self.iter())
+            .finish()
+    }
+}
 
 // ============================================
 // Trait definitions
@@ -131,14 +139,16 @@ pub trait PlgVectorOps: Sized {
     fn destroy(vec: &mut PlgVector<Self>);
     fn len(vec: &PlgVector<Self>) -> usize;
     fn data(vec: &PlgVector<Self>) -> *const Self;
-    fn data_mut(vec: &PlgVector<Self>) -> *mut Self;
+    fn data_mut(vec: &mut PlgVector<Self>) -> *mut Self;
     fn set(vec: &mut PlgVector<Self>, data: &[Self]);
 
     /// Get data as slice (zero-copy view)
     fn as_slice(vec: &PlgVector<Self>) -> &[Self] {
         unsafe {
             let len = Self::len(vec);
-            if len == 0 { return &[]; }
+            if len == 0 {
+                return std::slice::from_raw_parts(NonNull::<Self>::dangling().as_ptr(), 0);
+            }
             let data = Self::data(vec);
             std::slice::from_raw_parts(data, len)
         }
@@ -148,7 +158,9 @@ pub trait PlgVectorOps: Sized {
     fn as_mut_slice(vec: &mut PlgVector<Self>) -> &mut [Self] {
         unsafe {
             let len = Self::len(vec);
-            if len == 0 { return &mut []; }
+            if len == 0 {
+                return std::slice::from_raw_parts_mut(NonNull::<Self>::dangling().as_ptr(), 0);
+            }
             let data = Self::data_mut(vec);
             std::slice::from_raw_parts_mut(data, len)
         }
@@ -186,6 +198,9 @@ pub unsafe trait CEnumRepr: Sized + Copy {
 /// Automatic implementation of PlgVectorOps for enums that implement CEnumRepr
 impl<E: CEnumRepr> PlgVectorOps for E {
     fn new(data: &[Self]) -> PlgVector<Self> {
+        debug_assert!(size_of::<E>() == size_of::<E::ReprInt>());
+        debug_assert!(align_of::<E>() == align_of::<E::ReprInt>());
+
         unsafe {
             // Cast enum slice to integer slice
             let int_data = std::slice::from_raw_parts(
@@ -221,7 +236,7 @@ impl<E: CEnumRepr> PlgVectorOps for E {
         }
     }
 
-    fn data_mut(vec: &PlgVector<Self>) -> *mut Self {
+    fn data_mut(vec: &mut PlgVector<Self>) -> *mut Self {
         unsafe {
             let int_vec: &PlgVector<E::ReprInt> = std::mem::transmute(vec);
             E::ReprInt::data(int_vec) as *mut Self
@@ -267,7 +282,7 @@ macro_rules! vector_ops_traits {
                 $data(vec)
             }
 
-            fn data_mut(vec: &PlgVector<$t>) -> *mut Self {
+            fn data_mut(vec: &mut PlgVector<$t>) -> *mut Self {
                 $data(vec)
             }
 
@@ -594,7 +609,6 @@ impl From<Vec<PlgAny>> for PlgVector<PlgVariant> {
 // Convenient From implementations
 // ============================================
 
-#[macro_export]
 macro_rules! vector_from_vec {
     ($t:ty) => {
         impl From<&Vec<$t>> for PlgVector<$t> {
@@ -629,7 +643,6 @@ vector_from_vec!(Vector3);
 vector_from_vec!(Vector4);
 vector_from_vec!(Matrix4x4);
 
-#[macro_export]
 macro_rules! vector_from_slice {
     ($t:ty) => {
         impl From<&[$t]> for PlgVector<$t> {
@@ -665,44 +678,13 @@ vector_from_slice!(Matrix4x4);
 
 #[macro_export]
 macro_rules! vector_enum_traits {
-    ($enum_ty:ty, i8) => {
+    ($enum_ty:ty, $repr:ty) => {
         unsafe impl $crate::CEnumRepr for $enum_ty {
-            type ReprInt = i8;
+            type ReprInt = $repr;
         }
-    };
-    ($enum_ty:ty, i16) => {
-        unsafe impl $crate::CEnumRepr for $enum_ty {
-            type ReprInt = i16;
-        }
-    };
-    ($enum_ty:ty, i32) => {
-        unsafe impl $crate::CEnumRepr for $enum_ty {
-            type ReprInt = i32;
-        }
-    };
-    ($enum_ty:ty, i64) => {
-        unsafe impl $crate::CEnumRepr for $enum_ty {
-            type ReprInt = i64;
-        }
-    };
-    ($enum_ty:ty, u8) => {
-        unsafe impl $crate::CEnumRepr for $enum_ty {
-            type ReprInt = u8;
-        }
-    };
-    ($enum_ty:ty, u16) => {
-        unsafe impl $crate::CEnumRepr for $enum_ty {
-            type ReprInt = u16;
-        }
-    };
-    ($enum_ty:ty, u32) => {
-        unsafe impl $crate::CEnumRepr for $enum_ty {
-            type ReprInt = u32;
-        }
-    };
-    ($enum_ty:ty, u64) => {
-        unsafe impl $crate::CEnumRepr for $enum_ty {
-            type ReprInt = u64;
-        }
+
+        // Global const check outside the impl
+        const _: () = assert!(std::mem::size_of::<$enum_ty>() == std::mem::size_of::<$repr>());
+        const _: () = assert!(std::mem::align_of::<$enum_ty>() == std::mem::align_of::<$repr>());
     };
 }

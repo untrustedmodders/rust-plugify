@@ -120,13 +120,14 @@ pub struct PlgVariant {
     data: PlgVariantData,
     #[cfg(target_pointer_width = "32")]
     pad: [u8; 8],
-    pub current: PlgType,
+    current: PlgType,
 }
 const _: () = assert!(size_of::<PlgVariant>() == 32);
 
 impl std::fmt::Debug for PlgVariant {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("PlgVariant")
+            .field("value", &self.get())
             .field("current", &self.current)
             .finish()
     }
@@ -191,164 +192,74 @@ impl PlgVariant {
             pad: [0; 8],
             current: PlgType::Invalid,
         };
-        variant.set(value);
+        variant.construct(value);
         variant
     }
 
-    pub fn set(&mut self, value: &PlgAny) {
-        match value {
-            PlgAny::Invalid => {
-                self.current = PlgType::Invalid;
-            }
-            PlgAny::Bool(v) => {
-                self.data.boolean = *v;
-                self.current = PlgType::Bool;
-            }
-            PlgAny::Char8(v) => {
-                self.data.char8 = *v;
-                self.current = PlgType::Char8;
-            }
-            PlgAny::Char16(v) => {
-                self.data.char16 = *v;
-                self.current = PlgType::Char16;
-            }
-            PlgAny::Int8(v) => {
-                self.data.int8 = *v;
-                self.current = PlgType::Int8;
-            }
-            PlgAny::Int16(v) => {
-                self.data.int16 = *v;
-                self.current = PlgType::Int16;
-            }
-            PlgAny::Int32(v) => {
-                self.data.int32 = *v;
-                self.current = PlgType::Int32;
-            }
-            PlgAny::Int64(v) => {
-                self.data.int64 = *v;
-                self.current = PlgType::Int64;
-            }
-            PlgAny::UInt8(v) => {
-                self.data.uint8 = *v;
-                self.current = PlgType::UInt8;
-            }
-            PlgAny::UInt16(v) => {
-                self.data.uint16 = *v;
-                self.current = PlgType::UInt16;
-            }
-            PlgAny::UInt32(v) => {
-                self.data.uint32 = *v;
-                self.current = PlgType::UInt32;
-            }
-            PlgAny::UInt64(v) => {
-                self.data.uint64 = *v;
-                self.current = PlgType::UInt64;
-            }
-            PlgAny::Pointer(v) => {
-                self.data.ptr = *v;
-                self.current = PlgType::Pointer;
-            }
-            PlgAny::Float(v) => {
-                self.data.flt = *v;
-                self.current = PlgType::Float;
-            }
-            PlgAny::Double(v) => {
-                self.data.dbl = *v;
-                self.current = PlgType::Double;
-            }
-            PlgAny::String(v) => {
-                self.data.str = ManuallyDrop::new(PlgString::from(v));
-                self.current = PlgType::String;
-            }
-            PlgAny::ArrayBool(v) => {
-                self.data.vec_bool = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayBool;
-            }
-            PlgAny::ArrayChar8(v) => {
-                self.data.vec_c8 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayChar8;
-            }
-            PlgAny::ArrayChar16(v) => {
-                self.data.vec_c16 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayChar16;
-            }
-            PlgAny::ArrayInt8(v) => {
-                self.data.vec_i8 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayInt8;
-            }
-            PlgAny::ArrayInt16(v) => {
-                self.data.vec_i16 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayInt16;
-            }
-            PlgAny::ArrayInt32(v) => {
-                self.data.vec_i32 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayInt32;
-            }
-            PlgAny::ArrayInt64(v) => {
-                self.data.vec_i64 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayInt64;
-            }
-            PlgAny::ArrayUInt8(v) => {
-                self.data.vec_u8 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayUInt8;
-            }
-            PlgAny::ArrayUInt16(v) => {
-                self.data.vec_u16 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayUInt16;
-            }
-            PlgAny::ArrayUInt32(v) => {
-                self.data.vec_u32 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayUInt32;
-            }
-            PlgAny::ArrayUInt64(v) => {
-                self.data.vec_u64 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayUInt64;
-            }
-            PlgAny::ArrayPointer(v) => {
-                self.data.vec_usize = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayPointer;
-            }
-            PlgAny::ArrayFloat(v) => {
-                self.data.vec_f32 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayFloat;
-            }
-            PlgAny::ArrayDouble(v) => {
-                self.data.vec_f64 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayDouble;
-            }
-            PlgAny::ArrayString(v) => {
-                self.data.vec_str = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayString;
-            }
-            PlgAny::ArrayVector2(v) => {
-                self.data.vec_vec2 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayVector2;
-            }
-            PlgAny::ArrayVector3(v) => {
-                self.data.vec_vec3 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayVector3;
-            }
-            PlgAny::ArrayVector4(v) => {
-                self.data.vec_vec4 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayVector4;
-            }
-            PlgAny::ArrayMatrix4x4(v) => {
-                self.data.vec_mat4x4 = ManuallyDrop::new(PlgVector::from(v));
-                self.current = PlgType::ArrayMatrix4x4;
-            }
-            PlgAny::Vector2(v) => {
-                self.data.vec2 = *v;
-                self.current = PlgType::Vector2;
-            }
-            PlgAny::Vector3(v) => {
-                self.data.vec3 = *v;
-                self.current = PlgType::Vector3;
-            }
-            PlgAny::Vector4(v) => {
-                self.data.vec4 = *v;
-                self.current = PlgType::Vector4;
-            }
+    pub fn construct(&mut self, value: &PlgAny) {
+        macro_rules! assign_scalar {
+            ($field:ident, $variant:expr, $type:expr) => {
+                {
+                    self.data.$field = *$variant;
+                    self.current = $type;
+                }
+            };
         }
+
+        macro_rules! assign_owned {
+            ($field:ident, $variant:expr, $type:expr) => {
+                {
+                    self.data.$field = ManuallyDrop::new($variant);
+                    self.current = $type;
+                }
+            };
+        }
+
+        match value {
+            PlgAny::Invalid => self.current = PlgType::Invalid,
+            PlgAny::Bool(v) => assign_scalar!(boolean, v, PlgType::Bool),
+            PlgAny::Char8(v) => assign_scalar!(char8, v, PlgType::Char8),
+            PlgAny::Char16(v) => assign_scalar!(char16, v, PlgType::Char16),
+            PlgAny::Int8(v) => assign_scalar!(int8, v, PlgType::Int8),
+            PlgAny::Int16(v) => assign_scalar!(int16, v, PlgType::Int16),
+            PlgAny::Int32(v) => assign_scalar!(int32, v, PlgType::Int32),
+            PlgAny::Int64(v) => assign_scalar!(int64, v, PlgType::Int64),
+            PlgAny::UInt8(v) => assign_scalar!(uint8, v, PlgType::UInt8),
+            PlgAny::UInt16(v) => assign_scalar!(uint16, v, PlgType::UInt16),
+            PlgAny::UInt32(v) => assign_scalar!(uint32, v, PlgType::UInt32),
+            PlgAny::UInt64(v) => assign_scalar!(uint64, v, PlgType::UInt64),
+            PlgAny::Pointer(v) => assign_scalar!(ptr, v, PlgType::Pointer),
+            PlgAny::Float(v) => assign_scalar!(flt, v, PlgType::Float),
+            PlgAny::Double(v) => assign_scalar!(dbl, v, PlgType::Double),
+            PlgAny::String(v) => assign_owned!(str, PlgString::from(v), PlgType::String),
+            PlgAny::ArrayBool(v) => assign_owned!(vec_bool, PlgVector::from(v), PlgType::ArrayBool),
+            PlgAny::ArrayChar8(v) => assign_owned!(vec_c8, PlgVector::from(v), PlgType::ArrayChar8),
+            PlgAny::ArrayChar16(v) => assign_owned!(vec_c16, PlgVector::from(v), PlgType::ArrayChar16),
+            PlgAny::ArrayInt8(v) => assign_owned!(vec_i8, PlgVector::from(v), PlgType::ArrayInt8),
+            PlgAny::ArrayInt16(v) => assign_owned!(vec_i16, PlgVector::from(v), PlgType::ArrayInt16),
+            PlgAny::ArrayInt32(v) => assign_owned!(vec_i32, PlgVector::from(v), PlgType::ArrayInt32),
+            PlgAny::ArrayInt64(v) => assign_owned!(vec_i64, PlgVector::from(v), PlgType::ArrayInt64),
+            PlgAny::ArrayUInt8(v) => assign_owned!(vec_u8, PlgVector::from(v), PlgType::ArrayUInt8),
+            PlgAny::ArrayUInt16(v) => assign_owned!(vec_u16, PlgVector::from(v), PlgType::ArrayUInt16),
+            PlgAny::ArrayUInt32(v) => assign_owned!(vec_u32, PlgVector::from(v), PlgType::ArrayUInt32),
+            PlgAny::ArrayUInt64(v) => assign_owned!(vec_u64, PlgVector::from(v), PlgType::ArrayUInt64),
+            PlgAny::ArrayPointer(v) => assign_owned!(vec_usize, PlgVector::from(v), PlgType::ArrayPointer),
+            PlgAny::ArrayFloat(v) => assign_owned!(vec_f32, PlgVector::from(v), PlgType::ArrayFloat),
+            PlgAny::ArrayDouble(v) => assign_owned!(vec_f64, PlgVector::from(v), PlgType::ArrayDouble),
+            PlgAny::ArrayString(v) => assign_owned!(vec_str, PlgVector::from(v), PlgType::ArrayString),
+            PlgAny::ArrayVector2(v) => assign_owned!(vec_vec2, PlgVector::from(v), PlgType::ArrayVector2),
+            PlgAny::ArrayVector3(v) => assign_owned!(vec_vec3, PlgVector::from(v), PlgType::ArrayVector3),
+            PlgAny::ArrayVector4(v) => assign_owned!(vec_vec4, PlgVector::from(v), PlgType::ArrayVector4),
+            PlgAny::ArrayMatrix4x4(v) => assign_owned!(vec_mat4x4, PlgVector::from(v), PlgType::ArrayMatrix4x4),
+            PlgAny::Vector2(v) => assign_scalar!(vec2, v, PlgType::Vector2),
+            PlgAny::Vector3(v) => assign_scalar!(vec3, v, PlgType::Vector3),
+            PlgAny::Vector4(v) => assign_scalar!(vec4, v, PlgType::Vector4),
+        }
+    }
+
+    pub fn set(&mut self, value: &PlgAny){
+        self.destroy();
+        self.construct(value);
     }
 
     pub fn get(&self) -> PlgAny {
@@ -397,6 +308,10 @@ impl PlgVariant {
         }
     }
 
+    pub fn current(&self) -> PlgType {
+        self.current
+    }
+
     pub fn destroy(&mut self) {
         destroy_variant(self);
     }
@@ -406,11 +321,22 @@ impl Drop for PlgVariant {
     fn drop(&mut self) { self.destroy(); }
 }
 
+impl Clone for PlgVariant {
+    fn clone(&self) -> Self {
+        PlgVariant::new(&self.get())
+    }
+}
+
+impl Default for PlgVariant {
+    fn default() -> Self {
+        PlgVariant::new(&PlgAny::Invalid)
+    }
+}
+
 // ============================================
 // Convenient From implementations
 // ============================================
 
-#[macro_export]
 macro_rules! variant_from_primitive {
     ($rust_type:ty, $variant:ident) => {
         impl From<$rust_type> for PlgAny {
@@ -449,7 +375,6 @@ impl From<&str> for PlgAny {
     }
 }
 
-#[macro_export]
 macro_rules! variant_from_vec {
     ($t:ty, $variant:ident) => {
         impl From<Vec<$t>> for PlgAny {

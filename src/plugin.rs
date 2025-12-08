@@ -25,6 +25,8 @@ const K_API_VERSION: i32 = 1;
 
 // Plugin handle type
 type PluginHandle = usize;
+const _: () = assert!(size_of::<PluginHandle>() == size_of::<*const ()>());
+const _: () = assert!(align_of::<PluginHandle>() == align_of::<*const ()>());
 
 // Global plugin state
 #[derive(Debug)]
@@ -282,6 +284,7 @@ pub extern "C" fn plugify_init(
         has_start: callbacks.start_callback.get().is_some(),
         has_end: callbacks.end_callback.get().is_some()
     }).expect("PLUGIN: can only be set once");
+
     0
 }
 
