@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.2...plugify-v1.1.3) (2025-12-08)
+
+
+### Bug Fixes
+
+* add from copy traits ([25f3ac7](https://github.com/untrustedmodders/rust-plugify/commit/25f3ac7f4890b0cc1004d9d75c0dde4937a9970e))
+
 ## [1.1.2](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.1...plugify-v1.1.2) (2025-12-08)
 
 
