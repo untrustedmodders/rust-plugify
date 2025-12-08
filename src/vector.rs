@@ -533,48 +533,6 @@ vector_ops_traits!(
 );
 
 // ============================================
-// Panic guard helper for FFI operations
-// ============================================
-
-/// Guard to ensure C++ resources are cleaned up if a panic occurs during operations
-///
-/// # Panic Safety
-///
-/// If a panic occurs while this guard is active, the Drop implementation will call
-/// the C++ destroy function to prevent resource leaks. The guard is typically disarmed
-/// by calling `defuse()` when the operation completes successfully.
-struct PanicGuard<T: PlgVectorOps> {
-    vec: *mut PlgVector<T>,  // Raw pointer instead of reference
-}
-
-impl<T: PlgVectorOps> PanicGuard<T> {
-    /// # Safety
-    ///
-    /// The caller must ensure that:
-    /// - `vec` points to a valid PlgVector<T>
-    /// - The pointer remains valid until the guard is dropped or defused
-    /// - No other code calls destroy() on this vector while the guard is active
-    unsafe fn new(vec: *mut PlgVector<T>) -> Self {
-        Self { vec }
-    }
-
-    fn defuse(mut self) {
-        self.vec = std::ptr::null_mut();
-    }
-}
-
-impl<T: PlgVectorOps> Drop for PanicGuard<T> {
-    fn drop(&mut self) {
-        if !self.vec.is_null() {
-            unsafe {
-                // SAFETY: The pointer was valid when created
-                T::destroy(&mut *self.vec);
-            }
-        }
-    }
-}
-
-// ============================================
 // Generic methods on PlgVector
 // ============================================
 
@@ -631,16 +589,12 @@ impl<T: PlgVectorOps> PlgVector<T> {
 
     /// Set new data to the vector, replacing previous contents
     ///
-    /// # Panics
+    /// # Safety
     ///
-    /// May panic if the C++ reallocation fails. If a panic occurs, the vector
-    /// may be left in an indeterminate state. The C++ resources will still be
-    /// cleaned up properly when the vector is dropped.
+    /// The C++ implementation must not throw exceptions. If allocation fails,
+    /// the process will abort.
     pub fn set(&mut self, data: &[T]) {
-        // Use a panic guard to ensure C++ cleanup happens even if set() panics
-        let guard = unsafe { PanicGuard::new(self as *mut _) };
         T::set(self, data);
-        guard.defuse(); // Operation succeeded, don't clean up
     }
 
     /// Destroy the vector (manual cleanup)

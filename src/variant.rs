@@ -231,58 +231,6 @@ pub enum PlgAny {
 }
 
 // ============================================
-// Panic guard helper for FFI operations
-// ============================================
-
-/// Guard to ensure C++ resources are cleaned up if a panic occurs during construction
-///
-/// # Panic Safety
-///
-/// If a panic occurs while constructing a variant (e.g., during PlgVector allocation),
-/// the Drop implementation will call the C++ destroy function to prevent resource leaks.
-///
-/// # Implementation Note
-///
-/// Uses raw pointers instead of references to avoid borrow checker conflicts when
-/// the guarded resource needs to be used after guard creation.
-struct PanicGuard {
-    variant: *mut PlgVariant,
-}
-
-impl PanicGuard {
-    /// Create a new panic guard
-    ///
-    /// # Safety
-    ///
-    /// The caller must ensure that:
-    /// - `variant` points to a valid PlgVariant
-    /// - The pointer remains valid until the guard is dropped or defused
-    /// - No other code calls destroy() on this variant while the guard is active
-    unsafe fn new(variant: *mut PlgVariant) -> Self {
-        Self { variant }
-    }
-
-    /// Disarm the guard - call this when the operation completes successfully
-    fn defuse(mut self) {
-        self.variant = std::ptr::null_mut();
-    }
-}
-
-impl Drop for PanicGuard {
-    fn drop(&mut self) {
-        if !self.variant.is_null() {
-            // If we're dropping due to a panic, clean up the C++ resource
-            unsafe {
-                // SAFETY: The pointer was valid when created and we haven't moved the variant
-                destroy_variant(&mut *self.variant);
-                // Reset to invalid state
-                (*self.variant).current = PlgType::Invalid;
-            }
-        }
-    }
-}
-
-// ============================================
 // Core implementation
 // ============================================
 
@@ -312,15 +260,9 @@ impl PlgVariant {
     /// Callers must ensure the variant is in the Invalid state or has been
     /// properly destroyed before calling this.
     ///
-    /// # Panics
-    ///
-    /// May panic during allocation of owned types (String, Vectors).
-    /// If a panic occurs, the PanicGuard will clean up any partially
-    /// constructed resources.
+    /// The C++ implementation must not throw exceptions. If allocation fails,
+    /// the process will abort.
     fn construct(&mut self, value: &PlgAny) {
-        // Panic guard to ensure cleanup if allocation fails
-        let guard = unsafe { PanicGuard::new(self as *mut _) };
-
         /// Macro to assign scalar (Copy) types to the union
         macro_rules! assign_scalar {
             ($field:ident, $variant:expr, $type:expr) => {
@@ -385,9 +327,6 @@ impl PlgVariant {
             PlgAny::Vector3(v) => assign_scalar!(vec3, v, PlgType::Vector3),
             PlgAny::Vector4(v) => assign_scalar!(vec4, v, PlgType::Vector4),
         }
-
-        // Operation succeeded, disarm the panic guard
-        guard.defuse();
     }
 
     /// Set the variant to a new value, destroying the old value first
@@ -395,13 +334,12 @@ impl PlgVariant {
     /// This is the safe way to change a variant's value - it properly destroys
     /// the old data before constructing the new data.
     ///
-    /// # Panics
+    /// # Safety
     ///
-    /// May panic if C++ allocation fails. If a panic occurs during construction,
-    /// the old value will have been destroyed but the new value won't be set,
-    /// leaving the variant in the Invalid state.
+    /// The C++ implementation must not throw exceptions. If allocation fails,
+    /// the process will abort.
     pub fn set(&mut self, value: &PlgAny) {
-        // FIXED: Destroy existing data BEFORE constructing new data
+        // Destroy existing data BEFORE constructing new data
         // This prevents memory leaks if the variant already holds data
         self.destroy();
         self.construct(value);
@@ -487,8 +425,6 @@ impl PlgVariant {
     /// Only use this if you need explicit control over when cleanup occurs.
     pub fn destroy(&mut self) {
         destroy_variant(self);
-        // After destruction, mark as invalid to prevent accidental reuse
-        self.current = PlgType::Invalid;
     }
 }
 

@@ -50,52 +50,6 @@ impl std::fmt::Debug for PlgString {
     }
 }
 
-/// Guard to ensure C++ resources are cleaned up if a panic occurs during operations
-///
-/// # Panic Safety
-///
-/// If a panic occurs while this guard is active, the Drop implementation will call
-/// the C++ destroy function to prevent resource leaks.
-///
-/// # Implementation Note
-///
-/// Uses raw pointers instead of references to avoid borrow checker conflicts when
-/// the guarded resource needs to be used after guard creation.
-struct PanicGuard {
-    string: *mut PlgString,
-}
-
-impl PanicGuard {
-    /// Create a new panic guard
-    ///
-    /// # Safety
-    ///
-    /// The caller must ensure that:
-    /// - `string` points to a valid PlgString
-    /// - The pointer remains valid until the guard is dropped or defused
-    /// - No other code calls destroy() on this string while the guard is active
-    unsafe fn new(string: *mut PlgString) -> Self {
-        Self { string }
-    }
-
-    /// Disarm the guard - call this when the operation completes successfully
-    fn defuse(mut self) {
-        self.string = std::ptr::null_mut();
-    }
-}
-
-impl Drop for PanicGuard {
-    fn drop(&mut self) {
-        if !self.string.is_null() {
-            // If we're dropping due to a panic, clean up the C++ resource
-            unsafe {
-                // SAFETY: The pointer was valid when created and we haven't moved the string
-                destroy_string(&mut *self.string);
-            }
-        }
-    }
-}
-
 impl PlgString {
     /// Create a new empty PlgString
     ///
@@ -261,16 +215,12 @@ impl PlgString {
 
     /// Set the string to a new value, replacing the previous contents
     ///
-    /// # Panics
+    /// # Safety
     ///
-    /// May panic if the C++ reallocation fails. If a panic occurs, the string
-    /// may be left in an indeterminate state. The C++ resources will still be
-    /// cleaned up properly when the string is dropped.
+    /// The C++ implementation must not throw exceptions. If allocation fails,
+    /// the process will abort.
     pub fn set(&mut self, s: &str) {
-        // Use a panic guard to ensure C++ cleanup happens even if assign_string() panics
-        let guard = unsafe { PanicGuard::new(self as *mut _) };
         assign_string(self, s.as_ptr(), s.len());
-        guard.defuse(); // Operation succeeded, don't clean up
     }
 
     /// Destroy the string (manual cleanup)
