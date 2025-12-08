@@ -449,7 +449,7 @@ impl<T: PlgVectorOps> PlgVector<T> {
     pub fn new() -> Self {
         T::new(&[])
     }
-    
+
     /// Construct a new PlgVector from a slice
     pub fn from_slice(data: &[T]) -> Self {
         T::new(data)
@@ -554,6 +554,12 @@ impl From<&Vec<String>> for PlgVector<PlgString> {
     }
 }
 
+impl From<Vec<String>> for PlgVector<PlgString> {
+    fn from(data: Vec<String>) -> Self {
+        PlgVector::from(data.as_slice())
+    }
+}
+
 impl PlgVector<PlgVariant> {
     pub fn to_any(&self) -> Vec<PlgAny> {
         self.as_slice()
@@ -578,6 +584,12 @@ impl From<&Vec<PlgAny>> for PlgVector<PlgVariant> {
     }
 }
 
+impl From<Vec<PlgAny>> for PlgVector<PlgVariant> {
+    fn from(data: Vec<PlgAny>) -> Self {
+        PlgVector::from(data.as_slice())
+    }
+}
+
 // ============================================
 // Convenient From implementations
 // ============================================
@@ -587,6 +599,11 @@ macro_rules! vector_from_vec {
     ($t:ty) => {
         impl From<&Vec<$t>> for PlgVector<$t> {
             fn from(value: &Vec<$t>) -> Self {
+                PlgVector::from_slice(value.as_slice())
+            }
+        }
+        impl From<Vec<$t>> for PlgVector<$t> {
+            fn from(value: Vec<$t>) -> Self {
                 PlgVector::from_slice(value.as_slice())
             }
         }

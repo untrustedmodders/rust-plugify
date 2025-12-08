@@ -485,3 +485,9 @@ impl From<&PlgAny> for PlgVariant {
         PlgVariant::new(value)
     }
 }
+
+impl From<PlgAny> for PlgVariant {
+    fn from(value: PlgAny) -> Self {
+        PlgVariant::new(&value)
+    }
+}
