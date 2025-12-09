@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.7](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.6...plugify-v1.1.7) (2025-12-09)
+
+
+### Bug Fixes
+
+* add missing formatters ([749f5d6](https://github.com/untrustedmodders/rust-plugify/commit/749f5d6c3d4ff1c58ac666b7db35cfef3a354960))
+
 ## [1.1.6](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.5...plugify-v1.1.6) (2025-12-09)
 
 
