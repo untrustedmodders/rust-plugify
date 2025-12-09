@@ -180,6 +180,51 @@ impl std::fmt::Debug for PlgVariant {
     }
 }
 
+impl std::fmt::Display for PlgVariant {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.get() {
+            PlgAny::Invalid => write!(f, "Invalid"),
+            PlgAny::Bool(v) => write!(f, "{}", v),
+            PlgAny::Char8(v) => write!(f, "{}", v),
+            PlgAny::Char16(v) => write!(f, "{}", v),
+            PlgAny::Int8(v) => write!(f, "{}", v),
+            PlgAny::Int16(v) => write!(f, "{}", v),
+            PlgAny::Int32(v) => write!(f, "{}", v),
+            PlgAny::Int64(v) => write!(f, "{}", v),
+            PlgAny::UInt8(v) => write!(f, "{}", v),
+            PlgAny::UInt16(v) => write!(f, "{}", v),
+            PlgAny::UInt32(v) => write!(f, "{}", v),
+            PlgAny::UInt64(v) => write!(f, "{}", v),
+            PlgAny::Pointer(v) => write!(f, "0x{:x}", v),
+            PlgAny::Float(v) => write!(f, "{}", v),
+            PlgAny::Double(v) => write!(f, "{}", v),
+            PlgAny::String(v) => write!(f, "{}", v),
+            PlgAny::ArrayBool(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayChar8(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayChar16(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayInt8(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayInt16(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayInt32(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayInt64(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayUInt8(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayUInt16(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayUInt32(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayUInt64(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayPointer(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayFloat(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayDouble(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayString(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayVector2(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayVector3(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayVector4(v) => write!(f, "{:?}", v),
+            PlgAny::ArrayMatrix4x4(v) => write!(f, "{:?}", v),
+            PlgAny::Vector2(v) => write!(f, "{:?}", v),
+            PlgAny::Vector3(v) => write!(f, "{:?}", v),
+            PlgAny::Vector4(v) => write!(f, "{:?}", v),
+        }
+    }
+}
+
 // ============================================
 // Rust-native value type (similar to Go's `any`)
 // ============================================

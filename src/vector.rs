@@ -139,6 +139,21 @@ impl<T: PlgVectorOps + std::fmt::Debug> std::fmt::Debug for PlgVector<T> {
     }
 }
 
+impl<T: PlgVectorOps + std::fmt::Display> std::fmt::Display for PlgVector<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[")?;
+        let mut first = true;
+        for item in self.iter() {
+            if !first {
+                write!(f, ", ")?;
+            }
+            write!(f, "{}", item)?;
+            first = false;
+        }
+        write!(f, "]")
+    }
+}
+
 // ============================================
 // Trait definitions
 // ============================================
