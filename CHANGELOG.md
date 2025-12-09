@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.6](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.5...plugify-v1.1.6) (2025-12-09)
+
+
+### Bug Fixes
+
+* string types for getters ([28a1eda](https://github.com/untrustedmodders/rust-plugify/commit/28a1eda05d1c83cbec2c2a0a3e64c9c670f9e982))
+
 ## [1.1.5](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.4...plugify-v1.1.5) (2025-12-08)
 
 
