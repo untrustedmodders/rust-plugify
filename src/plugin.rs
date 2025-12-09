@@ -1,14 +1,14 @@
 use std::sync::OnceLock;
 use crate::{import_symbol, vector::*, string::*, variant::*};
 
-import_symbol!(get_method_ptr, GET_METHOD_PTR, init_get_method_ptr, (name:*const u8, size:usize) -> usize);
+import_symbol!(get_method_ptr, GET_METHOD_PTR, init_get_method_ptr, (name:&PlgString) -> usize);
 import_symbol!(get_base_dir, GET_BASE_DIR, init_get_base_dir, () -> PlgString);
 import_symbol!(get_extensions_dir, GET_EXTENSIONS_DIR, init_get_extensions_dir, () -> PlgString);
 import_symbol!(get_configs_dir, GET_CONFIGS_DIR, init_get_configs_dir, () -> PlgString);
 import_symbol!(get_data_dir, GET_DATA_DIR, init_get_data_dir, () -> PlgString);
 import_symbol!(get_logs_dir, GET_LOGS_DIR, init_get_logs_dir, () -> PlgString);
 import_symbol!(get_cache_dir, GET_CACHE_DIR, init_get_cache_dir, () -> PlgString);
-import_symbol!(is_extension_loaded, IS_EXTENSION_LOADED, init_is_extension_loaded, (name:*const u8, nsize:usize, constraint:*const u8, csize:usize) -> bool);
+import_symbol!(is_extension_loaded, IS_EXTENSION_LOADED, init_is_extension_loaded, (name:&PlgString, constraint:&PlgString) -> bool);
 
 import_symbol!(get_plugin_id, GET_PLUGIN_ID, init_get_plugin_id, (handle:PluginHandle) -> usize);
 import_symbol!(get_plugin_name, GET_PLUGIN_NAME, init_get_plugin_name, (handle:PluginHandle) -> PlgString);
