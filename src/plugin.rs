@@ -10,7 +10,7 @@ import_symbol!(get_logs_dir, GET_LOGS_DIR, init_get_logs_dir, () -> PlgString);
 import_symbol!(get_cache_dir, GET_CACHE_DIR, init_get_cache_dir, () -> PlgString);
 import_symbol!(is_extension_loaded, IS_EXTENSION_LOADED, init_is_extension_loaded, (name:*const u8, nsize:usize, constraint:*const u8, csize:usize) -> bool);
 
-import_symbol!(get_plugin_id, GET_PLUGIN_ID, init_get_plugin_id, (handle:PluginHandle) -> usize);
+import_symbol!(get_plugin_id, GET_PLUGIN_ID, init_get_plugin_id, (handle:PluginHandle) -> isize);
 import_symbol!(get_plugin_name, GET_PLUGIN_NAME, init_get_plugin_name, (handle:PluginHandle) -> PlgString);
 import_symbol!(get_plugin_description, GET_PLUGIN_DESCRIPTION, init_get_plugin_description, (handle:PluginHandle) -> PlgString);
 import_symbol!(get_plugin_version, GET_PLUGIN_VERSION, init_get_plugin_version, (handle:PluginHandle) -> PlgString);
@@ -31,7 +31,7 @@ const _: () = assert!(align_of::<PluginHandle>() == align_of::<*const ()>());
 // Global plugin state
 #[derive(Debug)]
 pub struct PluginInfo {
-    pub id: usize,
+    pub id: isize,
     pub name: String,
     pub description: String,
     pub version: String,
@@ -60,6 +60,7 @@ impl Default for PluginContext {
     }
 }
 
+#[derive(Debug)]
 pub struct PluginCallbacks {
     pub update_callback: OnceLock<fn(f32)>,
     pub start_callback: OnceLock<fn()>,

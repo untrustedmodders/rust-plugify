@@ -378,7 +378,7 @@ impl PlgVariant {
 
                 // Owned types: convert to owned Rust types
                 // SAFETY: ManuallyDrop doesn't affect reading; we clone/convert the data
-                PlgType::String => PlgAny::String(self.data.str.as_str().to_string()),
+                PlgType::String => PlgAny::String(self.data.str.to_string()),
                 PlgType::ArrayBool => PlgAny::ArrayBool(self.data.vec_bool.to_vec()),
                 PlgType::ArrayChar8 => PlgAny::ArrayChar8(self.data.vec_c8.to_vec()),
                 PlgType::ArrayChar16 => PlgAny::ArrayChar16(self.data.vec_c16.to_vec()),
