@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.6](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.5...plugify-v1.1.6) (2025-12-09)
+
+
+### Bug Fixes
+
+* some improvements of containers ([b7f1adf](https://github.com/untrustedmodders/rust-plugify/commit/b7f1adfda7c5cd292bc4cf4f979c138f8025084a))
+
 ## [1.1.5](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.4...plugify-v1.1.5) (2025-12-08)
 
 
