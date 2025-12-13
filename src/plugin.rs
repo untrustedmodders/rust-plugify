@@ -109,7 +109,6 @@ pub extern "C" fn plugify_init(
     let mut i = 0;
 
     // Set all the function pointers
-    init_get_method_ptr(api[i]); i += 1;
     init_get_base_dir(api[i]); i += 1;
     init_get_extensions_dir(api[i]); i += 1;
     init_get_configs_dir(api[i]); i += 1;
