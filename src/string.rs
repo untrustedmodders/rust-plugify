@@ -1,5 +1,3 @@
-use std::sync::OnceLock;
-use std::ops::Deref;
 use crate::import_symbol;
 
 import_symbol!(construct_string, CONSTRUCT_STRING, init_construct_string, (data:*const u8, size:usize) -> PlgString);
@@ -36,7 +34,7 @@ import_symbol!(assign_string, ASSIGN_STRING, init_assign_string, (str:*mut PlgSt
 /// UTF-8 invariant and cause undefined behavior. Use `set()` for modifications.
 #[repr(C)]
 pub struct PlgString {
-    data: *const u8,
+    data: usize,
     size: usize,
     cap: usize,
 }
@@ -250,7 +248,7 @@ impl Default for PlgString {
     }
 }
 
-impl Deref for PlgString {
+impl std::ops::Deref for PlgString {
     type Target = str;
     fn deref(&self) -> &Self::Target {
         self.as_str()

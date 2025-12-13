@@ -50,16 +50,6 @@ pub struct PluginContext {
     has_end: bool,
 }
 
-impl Default for PluginContext {
-    fn default() -> Self {
-        Self {
-            has_update: false,
-            has_start: false,
-            has_end: false,
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct PluginCallbacks {
     pub update_callback: OnceLock<fn(f32)>,
@@ -67,8 +57,8 @@ pub struct PluginCallbacks {
     pub end_callback: OnceLock<fn()>,
 }
 
-impl Default for PluginCallbacks {
-    fn default() -> Self {
+impl PluginCallbacks {
+    fn new() -> Self {
         Self {
             update_callback: OnceLock::new(),
             start_callback: OnceLock::new(),
@@ -90,18 +80,18 @@ pub static CONTEXT: OnceLock<PluginContext> = OnceLock::new();
 pub static CALLBACKS: OnceLock<PluginCallbacks> = OnceLock::new();
 
 pub fn on_plugin_start(func: fn()) {
-    let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::default());
-    callbacks.start_callback.set(func).expect("start_callback: already set");
+    let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::new());
+    let _ = callbacks.start_callback.set(func);
 }
 
 pub fn on_plugin_update(func: fn(f32)) {
-    let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::default());
-    callbacks.update_callback.set(func).expect("update_callback: already set");
+    let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::new());
+    let _ = callbacks.update_callback.set(func);
 }
 
 pub fn on_plugin_end(func: fn()) {
-    let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::default());
-    callbacks.end_callback.set(func).expect("end_callback: already set");
+    let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::new());
+    let _ = callbacks.end_callback.set(func);
 }
 
 #[unsafe(no_mangle)]
@@ -257,17 +247,17 @@ pub extern "C" fn plugify_init(
     init_assign_vector_matrix4x4(api[i]); //i += 1;
 
     // Get directory paths
-    BASE_DIR.set(get_base_dir().to_string()).expect("BASE_DIR: can only be set once");
-    EXTENSIONS_DIR.set(get_extensions_dir().to_string()).expect("EXTENSIONS_DIR: can only be set once");
-    CONFIGS_DIR.set(get_configs_dir().to_string()).expect("CONFIGS_DIR: can only be set once");
-    DATA_DIR.set(get_data_dir().to_string()).expect("DATA_DIR: can only be set once");
-    LOGS_DIR.set(get_logs_dir().to_string()).expect("LOGS_DIR: can only be set once");
-    CACHE_DIR.set(get_cache_dir().to_string()).expect("CACHE_DIR: can only be set once");
+    let _ = BASE_DIR.set(get_base_dir().to_string());
+    let _ = EXTENSIONS_DIR.set(get_extensions_dir().to_string());
+    let _ = CONFIGS_DIR.set(get_configs_dir().to_string());
+    let _ = DATA_DIR.set(get_data_dir().to_string());
+    let _ = LOGS_DIR.set(get_logs_dir().to_string());
+    let _ = CACHE_DIR.set(get_cache_dir().to_string());
 
     // Store plugin handle
-    HANDLE.set(handle).expect("HANDLE: can only be set once");
+    let _ = HANDLE.set(handle);
 
-    PLUGIN.set(PluginInfo {
+    let _ = PLUGIN.set(PluginInfo {
         id: get_plugin_id(handle),
         name: get_plugin_name(handle).to_string(),
         description: get_plugin_description(handle).to_string(),
@@ -277,14 +267,14 @@ pub extern "C" fn plugify_init(
         license: get_plugin_license(handle).to_string(),
         location: get_plugin_location(handle).to_string(),
         dependencies: get_plugin_dependencies(handle).to_string(),
-    }).expect("PLUGIN: can only be set once");
+    });
 
-    let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::default());
-    CONTEXT.set(PluginContext {
+    let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::new());
+    let _ = CONTEXT.set(PluginContext {
         has_update: callbacks.update_callback.get().is_some(),
         has_start: callbacks.start_callback.get().is_some(),
         has_end: callbacks.end_callback.get().is_some()
-    }).expect("PLUGIN: can only be set once");
+    });
 
     0
 }

@@ -477,18 +477,18 @@ macro_rules! export_symbols {
 #[macro_export]
 macro_rules! import_symbol {
     ($name:ident, $func_name:ident, $init_name:ident, ($($arg_name:ident : $arg_ty:ty),*) -> $ret:ty) => {
-        static $func_name: OnceLock<unsafe extern "C" fn($($arg_ty),*) -> $ret> = OnceLock::new();
+        static mut $func_name: Option<unsafe extern "C" fn($($arg_ty),*) -> $ret> = None;
 
         pub fn $init_name(addr: usize) {
             unsafe {
                 let ptr = std::mem::transmute::<usize, unsafe extern "C" fn($($arg_ty),*) -> $ret>(addr);
-                $func_name.set(ptr).expect("Function can only be set once");
+                $func_name = Some(ptr);
             }
         }
 
         pub fn $name($($arg_name: $arg_ty),*) -> $ret {
             unsafe {
-                let func = $func_name.get().expect("Function not initialized");
+                let func = $func_name.expect("Function not initialized");
                 func($($arg_name),*)
             }
         }

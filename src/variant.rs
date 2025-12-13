@@ -1,5 +1,4 @@
-use std::mem::{ManuallyDrop};
-use std::sync::OnceLock;
+use std::mem::ManuallyDrop;
 use crate::{import_symbol, PlgString, PlgVector, Vector2, Vector3, Vector4, Matrix4x4};
 
 import_symbol!(destroy_variant, DESTROY_VARIANT, init_destroy_variant, (variant: *mut PlgVariant) -> ());

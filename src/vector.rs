@@ -1,5 +1,5 @@
+use std::marker::PhantomData;
 use std::ops::{Index, IndexMut};
-use std::sync::OnceLock;
 use crate::{import_symbol, PlgString, PlgVariant, PlgAny, Vector2, Vector3, Vector4, Matrix4x4};
 
 // Vector constructors
@@ -125,9 +125,10 @@ import_symbol!(assign_vector_matrix4x4, ASSIGN_VECTOR_MATRIX4X4, init_assign_vec
 /// the C++ library functions. Direct field access or construction is unsafe and undefined behavior.
 #[repr(C)]
 pub struct PlgVector<T: PlgVectorOps> {
-    begin: *mut T,
-    end: *mut T,
-    capacity: *mut T,
+    begin: usize,
+    end: usize,
+    capacity: usize,
+    _phantom: PhantomData<T>,
 }
 const _: () = assert!(size_of::<PlgVector<usize>>() == 3 * size_of::<*const ()>());
 
