@@ -243,7 +243,7 @@ pub extern "C" fn plugify_init(
     init_assign_vector_vector2(api[i]); i += 1;
     init_assign_vector_vector3(api[i]); i += 1;
     init_assign_vector_vector4(api[i]); i += 1;
-    init_assign_vector_matrix4x4(api[i]); //i += 1;
+    init_assign_vector_matrix4x4(api[i]); // i += 1;
 
     // Get directory paths
     let _ = BASE_DIR.set(get_base_dir().to_string());
