@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.8](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.7...plugify-v1.1.8) (2025-12-13)
+
+
+### Bug Fixes
+
+* reload issue ([45d60b1](https://github.com/untrustedmodders/rust-plugify/commit/45d60b1cbf5ee2ecb7e0334f70e1180af7888f31))
+
 ## [1.1.7](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.6...plugify-v1.1.7) (2025-12-09)
 
 
