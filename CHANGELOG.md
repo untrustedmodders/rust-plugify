@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.9](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.8...plugify-v1.1.9) (2025-12-13)
+
+
+### Bug Fixes
+
+* remove get method ptr ([69e5de5](https://github.com/untrustedmodders/rust-plugify/commit/69e5de5901b839658bc3d6bb7e405274700ae4f4))
+
 ## [1.1.8](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.7...plugify-v1.1.8) (2025-12-13)
 
 
