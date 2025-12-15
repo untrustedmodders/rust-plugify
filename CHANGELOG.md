@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.2.0...plugify-v1.2.1) (2025-12-15)
+
+
+### Bug Fixes
+
+* rename classes to make it easier ([c18ca05](https://github.com/untrustedmodders/rust-plugify/commit/c18ca059f89eb6b937e635ffd23084da6f7e3da1))
+
 ## [1.2.0](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.1.9...plugify-v1.2.0) (2025-12-13)
 
 
