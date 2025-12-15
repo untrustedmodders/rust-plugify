@@ -1,10 +1,10 @@
 use crate::import_symbol;
 
-import_symbol!(construct_string, CONSTRUCT_STRING, init_construct_string, (data:*const u8, size:usize) -> PlgString);
-import_symbol!(destroy_string, DESTROY_STRING, init_destroy_string, (str:*mut PlgString) -> ());
-import_symbol!(get_string_data, GET_STRING_DATA, init_get_string_data, (str:*const PlgString) -> *mut u8);
-import_symbol!(get_string_length, GET_STRING_LENGTH, init_get_string_length, (str:*const PlgString) -> usize);
-import_symbol!(assign_string, ASSIGN_STRING, init_assign_string, (str:*mut PlgString, data:*const u8, size:usize) -> ());
+import_symbol!(construct_string, CONSTRUCT_STRING, init_construct_string, (data:*const u8, size:usize) -> Str);
+import_symbol!(destroy_string, DESTROY_STRING, init_destroy_string, (str:*mut Str) -> ());
+import_symbol!(get_string_data, GET_STRING_DATA, init_get_string_data, (str:*const Str) -> *mut u8);
+import_symbol!(get_string_length, GET_STRING_LENGTH, init_get_string_length, (str:*const Str) -> usize);
+import_symbol!(assign_string, ASSIGN_STRING, init_assign_string, (str:*mut Str, data:*const u8, size:usize) -> ());
 
 /// FFI-compatible string type matching the memory layout of the C++ plg::string
 ///
@@ -15,7 +15,7 @@ import_symbol!(assign_string, ASSIGN_STRING, init_assign_string, (str:*mut PlgSt
 ///
 /// # Ownership Contract
 ///
-/// - PlgString owns a foreign heap allocation managed by the C++ plg library
+/// - Str owns a foreign heap allocation managed by the C++ plg library
 /// - The foreign side provides: `construct_string`, `assign_string`, `destroy_string`
 /// - `get_string_data`/`get_string_length` return stable pointers until the next assignment
 /// - UTF-8 encoding is guaranteed by the foreign implementation
@@ -33,23 +33,23 @@ import_symbol!(assign_string, ASSIGN_STRING, init_assign_string, (str:*mut PlgSt
 /// Do NOT use `as_mut_bytes()` to modify the byte content, as this could break the
 /// UTF-8 invariant and cause undefined behavior. Use `set()` for modifications.
 #[repr(C)]
-pub struct PlgString {
+pub struct Str {
     data: usize,
     size: usize,
     cap: usize,
 }
-const _: () = assert!(size_of::<PlgString>() == 3 * size_of::<*const ()>());
+const _: () = assert!(size_of::<Str>() == 3 * size_of::<*const ()>());
 
-impl std::fmt::Debug for PlgString {
+impl std::fmt::Debug for Str {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("PlgString")
+        f.debug_tuple("Str")
             .field(&self.to_string())
             .finish()
     }
 }
 
-impl PlgString {
-    /// Create a new empty PlgString
+impl Str {
+    /// Create a new empty Str
     ///
     /// # Panics
     ///
@@ -58,7 +58,7 @@ impl PlgString {
         construct_string("".as_ptr(), 0)
     }
 
-    /// Create a new PlgString from a string slice
+    /// Create a new Str from a string slice
     ///
     /// # Panics
     ///
@@ -157,14 +157,14 @@ impl PlgString {
     ///
     /// ```rust
     /// // SAFE: Converting to uppercase (ASCII range)
-    /// let mut s = PlgString::from_str("hello");
+    /// let mut s = Str::from_str("hello");
     /// unsafe {
     ///     let bytes = s.as_mut_bytes();
     ///     bytes[0] = b'H';  // OK: still valid UTF-8
     /// }
     ///
     /// // UNSAFE: Breaking UTF-8
-    /// let mut s = PlgString::from_str("hello");
+    /// let mut s = Str::from_str("hello");
     /// unsafe {
     ///     let bytes = s.as_mut_bytes();
     ///     bytes[0] = 0xFF;  // BAD: invalid UTF-8!
@@ -230,44 +230,44 @@ impl PlgString {
     }
 }
 
-impl Drop for PlgString {
+impl Drop for Str {
     fn drop(&mut self) {
         self.destroy();
     }
 }
 
-impl Clone for PlgString {
+impl Clone for Str {
     fn clone(&self) -> Self {
-        PlgString::from_str(self.as_str())
+        Str::from_str(self.as_str())
     }
 }
 
-impl Default for PlgString {
+impl Default for Str {
     fn default() -> Self {
-        PlgString::new()
+        Str::new()
     }
 }
 
-impl std::ops::Deref for PlgString {
+impl std::ops::Deref for Str {
     type Target = str;
     fn deref(&self) -> &Self::Target {
         self.as_str()
     }
 }
 
-impl From<&str> for PlgString {
+impl From<&str> for Str {
     fn from(s: &str) -> Self {
         Self::from_str(s)
     }
 }
 
-impl From<String> for PlgString {
+impl From<String> for Str {
     fn from(s: String) -> Self {
         Self::from_str(s.as_str())
     }
 }
 
-impl From<&String> for PlgString {
+impl From<&String> for Str {
     fn from(s: &String) -> Self {
         Self::from_str(s.as_str())
     }
@@ -275,51 +275,51 @@ impl From<&String> for PlgString {
 
 // Additional helpful trait implementations
 
-impl PartialEq for PlgString {
+impl PartialEq for Str {
     fn eq(&self, other: &Self) -> bool {
         self.as_str() == other.as_str()
     }
 }
 
-impl Eq for PlgString {}
+impl Eq for Str {}
 
-impl PartialEq<str> for PlgString {
+impl PartialEq<str> for Str {
     fn eq(&self, other: &str) -> bool {
         self.as_str() == other
     }
 }
 
-impl PartialEq<&str> for PlgString {
+impl PartialEq<&str> for Str {
     fn eq(&self, other: &&str) -> bool {
         self.as_str() == *other
     }
 }
 
-impl PartialEq<String> for PlgString {
+impl PartialEq<String> for Str {
     fn eq(&self, other: &String) -> bool {
         self.as_str() == other.as_str()
     }
 }
 
-impl std::fmt::Display for PlgString {
+impl std::fmt::Display for Str {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.as_str())
     }
 }
 
-impl std::hash::Hash for PlgString {
+impl std::hash::Hash for Str {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.as_str().hash(state);
     }
 }
 
-impl PartialOrd for PlgString {
+impl PartialOrd for Str {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for PlgString {
+impl Ord for Str {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.as_str().cmp(other.as_str())
     }

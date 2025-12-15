@@ -1,12 +1,12 @@
 use std::mem::ManuallyDrop;
-use crate::{import_symbol, PlgString, PlgVector, Vector2, Vector3, Vector4, Matrix4x4};
+use crate::{import_symbol, Str, Arr, Vec2, Vec3, Vec4, Mat4x4};
 
-import_symbol!(destroy_variant, DESTROY_VARIANT, init_destroy_variant, (variant: *mut PlgVariant) -> ());
+import_symbol!(destroy_variant, DESTROY_VARIANT, init_destroy_variant, (variant: *mut Var) -> ());
 
 // Variant type enum
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PlgType {
+pub enum Type {
     Invalid,
 
     // C types
@@ -76,14 +76,14 @@ pub enum PlgType {
 ///
 /// # Safety
 ///
-/// This is a C-compatible union. Only the field corresponding to the `PlgType`
-/// discriminant in `PlgVariant::current` may be accessed. Accessing the wrong
+/// This is a C-compatible union. Only the field corresponding to the `Type`
+/// discriminant in `Var::current` may be accessed. Accessing the wrong
 /// field is undefined behavior.
 ///
 /// Fields wrapped in `ManuallyDrop` must be manually dropped when the variant
 /// is destroyed - this is handled by the C++ `destroy_variant` function.
 #[repr(C)]
-union PlgVariantData {
+union Data {
     // Scalar types (Copy, no Drop)
     boolean: bool,
     char8: i8,
@@ -101,31 +101,31 @@ union PlgVariantData {
     dbl: f64,
 
     // Owned types (require Drop, wrapped in ManuallyDrop)
-    str: ManuallyDrop<PlgString>,
-    vec_bool: ManuallyDrop<PlgVector<bool>>,
-    vec_c8: ManuallyDrop<PlgVector<i8>>,
-    vec_c16: ManuallyDrop<PlgVector<u16>>,
-    vec_i8: ManuallyDrop<PlgVector<i8>>,
-    vec_i16: ManuallyDrop<PlgVector<i16>>,
-    vec_i32: ManuallyDrop<PlgVector<i32>>,
-    vec_i64: ManuallyDrop<PlgVector<i64>>,
-    vec_u8: ManuallyDrop<PlgVector<u8>>,
-    vec_u16: ManuallyDrop<PlgVector<u16>>,
-    vec_u32: ManuallyDrop<PlgVector<u32>>,
-    vec_u64: ManuallyDrop<PlgVector<u64>>,
-    vec_usize: ManuallyDrop<PlgVector<usize>>,
-    vec_f32: ManuallyDrop<PlgVector<f32>>,
-    vec_f64: ManuallyDrop<PlgVector<f64>>,
-    vec_str: ManuallyDrop<PlgVector<PlgString>>,
-    vec_vec2: ManuallyDrop<PlgVector<Vector2>>,
-    vec_vec3: ManuallyDrop<PlgVector<Vector3>>,
-    vec_vec4: ManuallyDrop<PlgVector<Vector4>>,
-    vec_mat4x4: ManuallyDrop<PlgVector<Matrix4x4>>,
+    str: ManuallyDrop<Str>,
+    vec_bool: ManuallyDrop<Arr<bool>>,
+    vec_c8: ManuallyDrop<Arr<i8>>,
+    vec_c16: ManuallyDrop<Arr<u16>>,
+    vec_i8: ManuallyDrop<Arr<i8>>,
+    vec_i16: ManuallyDrop<Arr<i16>>,
+    vec_i32: ManuallyDrop<Arr<i32>>,
+    vec_i64: ManuallyDrop<Arr<i64>>,
+    vec_u8: ManuallyDrop<Arr<u8>>,
+    vec_u16: ManuallyDrop<Arr<u16>>,
+    vec_u32: ManuallyDrop<Arr<u32>>,
+    vec_u64: ManuallyDrop<Arr<u64>>,
+    vec_usize: ManuallyDrop<Arr<usize>>,
+    vec_f32: ManuallyDrop<Arr<f32>>,
+    vec_f64: ManuallyDrop<Arr<f64>>,
+    vec_str: ManuallyDrop<Arr<Str>>,
+    vec_vec2: ManuallyDrop<Arr<Vec2>>,
+    vec_vec3: ManuallyDrop<Arr<Vec3>>,
+    vec_vec4: ManuallyDrop<Arr<Vec4>>,
+    vec_mat4x4: ManuallyDrop<Arr<Mat4x4>>,
 
     // Vector types (Copy, no Drop)
-    vec2: Vector2,
-    vec3: Vector3,
-    vec4: Vector4,
+    vec2: Vec2,
+    vec3: Vec3,
+    vec4: Vec4,
 }
 
 /// FFI-compatible variant type matching the memory layout of C++ plg::variant
@@ -133,7 +133,7 @@ union PlgVariantData {
 /// # Memory Layout
 ///
 /// ```text
-/// [data: 24 bytes union] [pad: 8 bytes on 32-bit] [type: 1 byte PlgType]
+/// [data: 24 bytes union] [pad: 8 bytes on 32-bit] [type: 1 byte Type]
 /// Total: 32 bytes
 /// ```
 ///
@@ -151,7 +151,7 @@ union PlgVariantData {
 ///
 /// # Ownership Contract
 ///
-/// - PlgVariant owns the data in its union
+/// - Var owns the data in its union
 /// - Fields wrapped in `ManuallyDrop` have their cleanup handled by C++ `destroy_variant`
 /// - Must call `destroy()` exactly once (handled automatically by Drop)
 /// - After `destroy()`, the variant is in an invalid state until reconstructed
@@ -160,66 +160,66 @@ union PlgVariantData {
 ///
 /// This type is only safe to use through its public API. Direct field access is unsafe.
 #[repr(C)]
-pub struct PlgVariant {
-    data: PlgVariantData,
+pub struct Var {
+    data: Data,
     /// Padding to ensure 32-byte alignment on 32-bit architectures
     #[cfg(target_pointer_width = "32")]
     pad: [u8; 8],
     /// Type discriminant - indicates which union field is currently active
-    current: PlgType,
+    current: Type,
 }
-const _: () = assert!(size_of::<PlgVariant>() == 32);
+const _: () = assert!(size_of::<Var>() == 32);
 
-impl std::fmt::Debug for PlgVariant {
+impl std::fmt::Debug for Var {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("PlgVariant")
+        f.debug_struct("Var")
             .field("value", &self.get())
             .field("current", &self.current)
             .finish()
     }
 }
 
-impl std::fmt::Display for PlgVariant {
+impl std::fmt::Display for Var {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.get() {
-            PlgAny::Invalid => write!(f, "Invalid"),
-            PlgAny::Bool(v) => write!(f, "{}", v),
-            PlgAny::Char8(v) => write!(f, "{}", v),
-            PlgAny::Char16(v) => write!(f, "{}", v),
-            PlgAny::Int8(v) => write!(f, "{}", v),
-            PlgAny::Int16(v) => write!(f, "{}", v),
-            PlgAny::Int32(v) => write!(f, "{}", v),
-            PlgAny::Int64(v) => write!(f, "{}", v),
-            PlgAny::UInt8(v) => write!(f, "{}", v),
-            PlgAny::UInt16(v) => write!(f, "{}", v),
-            PlgAny::UInt32(v) => write!(f, "{}", v),
-            PlgAny::UInt64(v) => write!(f, "{}", v),
-            PlgAny::Pointer(v) => write!(f, "0x{:x}", v),
-            PlgAny::Float(v) => write!(f, "{}", v),
-            PlgAny::Double(v) => write!(f, "{}", v),
-            PlgAny::String(v) => write!(f, "{}", v),
-            PlgAny::ArrayBool(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayChar8(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayChar16(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayInt8(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayInt16(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayInt32(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayInt64(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayUInt8(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayUInt16(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayUInt32(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayUInt64(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayPointer(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayFloat(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayDouble(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayString(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayVector2(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayVector3(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayVector4(v) => write!(f, "{:?}", v),
-            PlgAny::ArrayMatrix4x4(v) => write!(f, "{:?}", v),
-            PlgAny::Vector2(v) => write!(f, "{:?}", v),
-            PlgAny::Vector3(v) => write!(f, "{:?}", v),
-            PlgAny::Vector4(v) => write!(f, "{:?}", v),
+            Any::Invalid => write!(f, "Invalid"),
+            Any::Bool(v) => write!(f, "{}", v),
+            Any::Char8(v) => write!(f, "{}", v),
+            Any::Char16(v) => write!(f, "{}", v),
+            Any::Int8(v) => write!(f, "{}", v),
+            Any::Int16(v) => write!(f, "{}", v),
+            Any::Int32(v) => write!(f, "{}", v),
+            Any::Int64(v) => write!(f, "{}", v),
+            Any::UInt8(v) => write!(f, "{}", v),
+            Any::UInt16(v) => write!(f, "{}", v),
+            Any::UInt32(v) => write!(f, "{}", v),
+            Any::UInt64(v) => write!(f, "{}", v),
+            Any::Pointer(v) => write!(f, "0x{:x}", v),
+            Any::Float(v) => write!(f, "{}", v),
+            Any::Double(v) => write!(f, "{}", v),
+            Any::String(v) => write!(f, "{}", v),
+            Any::ArrayBool(v) => write!(f, "{:?}", v),
+            Any::ArrayChar8(v) => write!(f, "{:?}", v),
+            Any::ArrayChar16(v) => write!(f, "{:?}", v),
+            Any::ArrayInt8(v) => write!(f, "{:?}", v),
+            Any::ArrayInt16(v) => write!(f, "{:?}", v),
+            Any::ArrayInt32(v) => write!(f, "{:?}", v),
+            Any::ArrayInt64(v) => write!(f, "{:?}", v),
+            Any::ArrayUInt8(v) => write!(f, "{:?}", v),
+            Any::ArrayUInt16(v) => write!(f, "{:?}", v),
+            Any::ArrayUInt32(v) => write!(f, "{:?}", v),
+            Any::ArrayUInt64(v) => write!(f, "{:?}", v),
+            Any::ArrayPointer(v) => write!(f, "{:?}", v),
+            Any::ArrayFloat(v) => write!(f, "{:?}", v),
+            Any::ArrayDouble(v) => write!(f, "{:?}", v),
+            Any::ArrayString(v) => write!(f, "{:?}", v),
+            Any::ArrayVector2(v) => write!(f, "{:?}", v),
+            Any::ArrayVector3(v) => write!(f, "{:?}", v),
+            Any::ArrayVector4(v) => write!(f, "{:?}", v),
+            Any::ArrayMatrix4x4(v) => write!(f, "{:?}", v),
+            Any::Vector2(v) => write!(f, "{:?}", v),
+            Any::Vector3(v) => write!(f, "{:?}", v),
+            Any::Vector4(v) => write!(f, "{:?}", v),
         }
     }
 }
@@ -231,9 +231,9 @@ impl std::fmt::Display for PlgVariant {
 /// Rust-native variant type that owns its data
 ///
 /// This is a safe Rust enum that can hold any of the variant types.
-/// Use this for Rust code; it converts to/from PlgVariant for FFI.
+/// Use this for Rust code; it converts to/from Var for FFI.
 #[derive(Debug, Clone)]
-pub enum PlgAny {
+pub enum Any {
     Invalid,
     Bool(bool),
     Char8(i8),
@@ -265,38 +265,38 @@ pub enum PlgAny {
     ArrayFloat(Vec<f32>),
     ArrayDouble(Vec<f64>),
     ArrayString(Vec<String>),
-    ArrayVector2(Vec<Vector2>),
-    ArrayVector3(Vec<Vector3>),
-    ArrayVector4(Vec<Vector4>),
-    ArrayMatrix4x4(Vec<Matrix4x4>),
-    Vector2(Vector2),
-    Vector3(Vector3),
-    Vector4(Vector4),
+    ArrayVector2(Vec<Vec2>),
+    ArrayVector3(Vec<Vec3>),
+    ArrayVector4(Vec<Vec4>),
+    ArrayMatrix4x4(Vec<Mat4x4>),
+    Vector2(Vec2),
+    Vector3(Vec3),
+    Vector4(Vec4),
 }
 
 // ============================================
 // Core implementation
 // ============================================
 
-impl PlgVariant {
-    /// Create a new PlgVariant from a PlgAny value
+impl Var {
+    /// Create a new Var from a Any value
     ///
     /// # Panics
     ///
     /// May panic if C++ allocation fails (e.g., for String or Vector types).
     /// The panic is safe - no resources will leak.
-    pub fn new(value: &PlgAny) -> Self {
-        let mut variant = PlgVariant {
-            data: PlgVariantData { int64: 0 },
+    pub fn new(value: &Any) -> Self {
+        let mut variant = Var {
+            data: Data { int64: 0 },
             #[cfg(target_pointer_width = "32")]
             pad: [0; 8],
-            current: PlgType::Invalid,
+            current: Type::Invalid,
         };
         variant.construct(value);
         variant
     }
 
-    /// Construct the variant from a PlgAny value
+    /// Construct the variant from a Any value
     ///
     /// # Safety
     ///
@@ -306,7 +306,7 @@ impl PlgVariant {
     ///
     /// The C++ implementation must not throw exceptions. If allocation fails,
     /// the process will abort.
-    fn construct(&mut self, value: &PlgAny) {
+    fn construct(&mut self, value: &Any) {
         /// Macro to assign scalar (Copy) types to the union
         macro_rules! assign_scalar {
             ($field:ident, $variant:expr, $type:expr) => {
@@ -332,44 +332,44 @@ impl PlgVariant {
         }
 
         match value {
-            PlgAny::Invalid => self.current = PlgType::Invalid,
-            PlgAny::Bool(v) => assign_scalar!(boolean, v, PlgType::Bool),
-            PlgAny::Char8(v) => assign_scalar!(char8, v, PlgType::Char8),
-            PlgAny::Char16(v) => assign_scalar!(char16, v, PlgType::Char16),
-            PlgAny::Int8(v) => assign_scalar!(int8, v, PlgType::Int8),
-            PlgAny::Int16(v) => assign_scalar!(int16, v, PlgType::Int16),
-            PlgAny::Int32(v) => assign_scalar!(int32, v, PlgType::Int32),
-            PlgAny::Int64(v) => assign_scalar!(int64, v, PlgType::Int64),
-            PlgAny::UInt8(v) => assign_scalar!(uint8, v, PlgType::UInt8),
-            PlgAny::UInt16(v) => assign_scalar!(uint16, v, PlgType::UInt16),
-            PlgAny::UInt32(v) => assign_scalar!(uint32, v, PlgType::UInt32),
-            PlgAny::UInt64(v) => assign_scalar!(uint64, v, PlgType::UInt64),
-            PlgAny::Pointer(v) => assign_scalar!(ptr, v, PlgType::Pointer),
-            PlgAny::Float(v) => assign_scalar!(flt, v, PlgType::Float),
-            PlgAny::Double(v) => assign_scalar!(dbl, v, PlgType::Double),
-            PlgAny::String(v) => assign_owned!(str, PlgString::from(v), PlgType::String),
-            PlgAny::ArrayBool(v) => assign_owned!(vec_bool, PlgVector::from(v), PlgType::ArrayBool),
-            PlgAny::ArrayChar8(v) => assign_owned!(vec_c8, PlgVector::from(v), PlgType::ArrayChar8),
-            PlgAny::ArrayChar16(v) => assign_owned!(vec_c16, PlgVector::from(v), PlgType::ArrayChar16),
-            PlgAny::ArrayInt8(v) => assign_owned!(vec_i8, PlgVector::from(v), PlgType::ArrayInt8),
-            PlgAny::ArrayInt16(v) => assign_owned!(vec_i16, PlgVector::from(v), PlgType::ArrayInt16),
-            PlgAny::ArrayInt32(v) => assign_owned!(vec_i32, PlgVector::from(v), PlgType::ArrayInt32),
-            PlgAny::ArrayInt64(v) => assign_owned!(vec_i64, PlgVector::from(v), PlgType::ArrayInt64),
-            PlgAny::ArrayUInt8(v) => assign_owned!(vec_u8, PlgVector::from(v), PlgType::ArrayUInt8),
-            PlgAny::ArrayUInt16(v) => assign_owned!(vec_u16, PlgVector::from(v), PlgType::ArrayUInt16),
-            PlgAny::ArrayUInt32(v) => assign_owned!(vec_u32, PlgVector::from(v), PlgType::ArrayUInt32),
-            PlgAny::ArrayUInt64(v) => assign_owned!(vec_u64, PlgVector::from(v), PlgType::ArrayUInt64),
-            PlgAny::ArrayPointer(v) => assign_owned!(vec_usize, PlgVector::from(v), PlgType::ArrayPointer),
-            PlgAny::ArrayFloat(v) => assign_owned!(vec_f32, PlgVector::from(v), PlgType::ArrayFloat),
-            PlgAny::ArrayDouble(v) => assign_owned!(vec_f64, PlgVector::from(v), PlgType::ArrayDouble),
-            PlgAny::ArrayString(v) => assign_owned!(vec_str, PlgVector::from(v), PlgType::ArrayString),
-            PlgAny::ArrayVector2(v) => assign_owned!(vec_vec2, PlgVector::from(v), PlgType::ArrayVector2),
-            PlgAny::ArrayVector3(v) => assign_owned!(vec_vec3, PlgVector::from(v), PlgType::ArrayVector3),
-            PlgAny::ArrayVector4(v) => assign_owned!(vec_vec4, PlgVector::from(v), PlgType::ArrayVector4),
-            PlgAny::ArrayMatrix4x4(v) => assign_owned!(vec_mat4x4, PlgVector::from(v), PlgType::ArrayMatrix4x4),
-            PlgAny::Vector2(v) => assign_scalar!(vec2, v, PlgType::Vector2),
-            PlgAny::Vector3(v) => assign_scalar!(vec3, v, PlgType::Vector3),
-            PlgAny::Vector4(v) => assign_scalar!(vec4, v, PlgType::Vector4),
+            Any::Invalid => self.current = Type::Invalid,
+            Any::Bool(v) => assign_scalar!(boolean, v, Type::Bool),
+            Any::Char8(v) => assign_scalar!(char8, v, Type::Char8),
+            Any::Char16(v) => assign_scalar!(char16, v, Type::Char16),
+            Any::Int8(v) => assign_scalar!(int8, v, Type::Int8),
+            Any::Int16(v) => assign_scalar!(int16, v, Type::Int16),
+            Any::Int32(v) => assign_scalar!(int32, v, Type::Int32),
+            Any::Int64(v) => assign_scalar!(int64, v, Type::Int64),
+            Any::UInt8(v) => assign_scalar!(uint8, v, Type::UInt8),
+            Any::UInt16(v) => assign_scalar!(uint16, v, Type::UInt16),
+            Any::UInt32(v) => assign_scalar!(uint32, v, Type::UInt32),
+            Any::UInt64(v) => assign_scalar!(uint64, v, Type::UInt64),
+            Any::Pointer(v) => assign_scalar!(ptr, v, Type::Pointer),
+            Any::Float(v) => assign_scalar!(flt, v, Type::Float),
+            Any::Double(v) => assign_scalar!(dbl, v, Type::Double),
+            Any::String(v) => assign_owned!(str, Str::from(v), Type::String),
+            Any::ArrayBool(v) => assign_owned!(vec_bool, Arr::from(v), Type::ArrayBool),
+            Any::ArrayChar8(v) => assign_owned!(vec_c8, Arr::from(v), Type::ArrayChar8),
+            Any::ArrayChar16(v) => assign_owned!(vec_c16, Arr::from(v), Type::ArrayChar16),
+            Any::ArrayInt8(v) => assign_owned!(vec_i8, Arr::from(v), Type::ArrayInt8),
+            Any::ArrayInt16(v) => assign_owned!(vec_i16, Arr::from(v), Type::ArrayInt16),
+            Any::ArrayInt32(v) => assign_owned!(vec_i32, Arr::from(v), Type::ArrayInt32),
+            Any::ArrayInt64(v) => assign_owned!(vec_i64, Arr::from(v), Type::ArrayInt64),
+            Any::ArrayUInt8(v) => assign_owned!(vec_u8, Arr::from(v), Type::ArrayUInt8),
+            Any::ArrayUInt16(v) => assign_owned!(vec_u16, Arr::from(v), Type::ArrayUInt16),
+            Any::ArrayUInt32(v) => assign_owned!(vec_u32, Arr::from(v), Type::ArrayUInt32),
+            Any::ArrayUInt64(v) => assign_owned!(vec_u64, Arr::from(v), Type::ArrayUInt64),
+            Any::ArrayPointer(v) => assign_owned!(vec_usize, Arr::from(v), Type::ArrayPointer),
+            Any::ArrayFloat(v) => assign_owned!(vec_f32, Arr::from(v), Type::ArrayFloat),
+            Any::ArrayDouble(v) => assign_owned!(vec_f64, Arr::from(v), Type::ArrayDouble),
+            Any::ArrayString(v) => assign_owned!(vec_str, Arr::from(v), Type::ArrayString),
+            Any::ArrayVector2(v) => assign_owned!(vec_vec2, Arr::from(v), Type::ArrayVector2),
+            Any::ArrayVector3(v) => assign_owned!(vec_vec3, Arr::from(v), Type::ArrayVector3),
+            Any::ArrayVector4(v) => assign_owned!(vec_vec4, Arr::from(v), Type::ArrayVector4),
+            Any::ArrayMatrix4x4(v) => assign_owned!(vec_mat4x4, Arr::from(v), Type::ArrayMatrix4x4),
+            Any::Vector2(v) => assign_scalar!(vec2, v, Type::Vector2),
+            Any::Vector3(v) => assign_scalar!(vec3, v, Type::Vector3),
+            Any::Vector4(v) => assign_scalar!(vec4, v, Type::Vector4),
         }
     }
 
@@ -382,14 +382,14 @@ impl PlgVariant {
     ///
     /// The C++ implementation must not throw exceptions. If allocation fails,
     /// the process will abort.
-    pub fn set(&mut self, value: &PlgAny) {
+    pub fn set(&mut self, value: &Any) {
         // Destroy existing data BEFORE constructing new data
         // This prevents memory leaks if the variant already holds data
         self.destroy();
         self.construct(value);
     }
 
-    /// Get the current value as a PlgAny (allocates and copies)
+    /// Get the current value as a Any (allocates and copies)
     ///
     /// # Safety
     ///
@@ -397,66 +397,66 @@ impl PlgVariant {
     /// - We match on `current` to determine which union field to access
     /// - The type invariant guarantees `current` matches the active union field
     /// - We copy/clone the data, so the original remains valid
-    #[must_use = "this allocates and copies data into a new PlgAny"]
-    pub fn get(&self) -> PlgAny {
+    #[must_use = "this allocates and copies data into a new Any"]
+    pub fn get(&self) -> Any {
         unsafe {
             match self.current {
-                PlgType::Invalid => PlgAny::Invalid,
+                Type::Invalid => Any::Invalid,
 
                 // Scalar types: direct copy (they're Copy)
-                // SAFETY: current == PlgType::X means data.x is the active field
-                PlgType::Bool => PlgAny::Bool(self.data.boolean),
-                PlgType::Char8 => PlgAny::Char8(self.data.char8),
-                PlgType::Char16 => PlgAny::Char16(self.data.char16),
-                PlgType::Int8 => PlgAny::Int8(self.data.int8),
-                PlgType::Int16 => PlgAny::Int16(self.data.int16),
-                PlgType::Int32 => PlgAny::Int32(self.data.int32),
-                PlgType::Int64 => PlgAny::Int64(self.data.int64),
-                PlgType::UInt8 => PlgAny::UInt8(self.data.uint8),
-                PlgType::UInt16 => PlgAny::UInt16(self.data.uint16),
-                PlgType::UInt32 => PlgAny::UInt32(self.data.uint32),
-                PlgType::UInt64 => PlgAny::UInt64(self.data.uint64),
-                PlgType::Pointer => PlgAny::Pointer(self.data.ptr),
-                PlgType::Float => PlgAny::Float(self.data.flt),
-                PlgType::Double => PlgAny::Double(self.data.dbl),
+                // SAFETY: current == Type::X means data.x is the active field
+                Type::Bool => Any::Bool(self.data.boolean),
+                Type::Char8 => Any::Char8(self.data.char8),
+                Type::Char16 => Any::Char16(self.data.char16),
+                Type::Int8 => Any::Int8(self.data.int8),
+                Type::Int16 => Any::Int16(self.data.int16),
+                Type::Int32 => Any::Int32(self.data.int32),
+                Type::Int64 => Any::Int64(self.data.int64),
+                Type::UInt8 => Any::UInt8(self.data.uint8),
+                Type::UInt16 => Any::UInt16(self.data.uint16),
+                Type::UInt32 => Any::UInt32(self.data.uint32),
+                Type::UInt64 => Any::UInt64(self.data.uint64),
+                Type::Pointer => Any::Pointer(self.data.ptr),
+                Type::Float => Any::Float(self.data.flt),
+                Type::Double => Any::Double(self.data.dbl),
 
                 // Owned types: convert to owned Rust types
                 // SAFETY: ManuallyDrop doesn't affect reading; we clone/convert the data
-                PlgType::String => PlgAny::String(self.data.str.to_string()),
-                PlgType::ArrayBool => PlgAny::ArrayBool(self.data.vec_bool.to_vec()),
-                PlgType::ArrayChar8 => PlgAny::ArrayChar8(self.data.vec_c8.to_vec()),
-                PlgType::ArrayChar16 => PlgAny::ArrayChar16(self.data.vec_c16.to_vec()),
-                PlgType::ArrayInt8 => PlgAny::ArrayInt8(self.data.vec_i8.to_vec()),
-                PlgType::ArrayInt16 => PlgAny::ArrayInt16(self.data.vec_i16.to_vec()),
-                PlgType::ArrayInt32 => PlgAny::ArrayInt32(self.data.vec_i32.to_vec()),
-                PlgType::ArrayInt64 => PlgAny::ArrayInt64(self.data.vec_i64.to_vec()),
-                PlgType::ArrayUInt8 => PlgAny::ArrayUInt8(self.data.vec_u8.to_vec()),
-                PlgType::ArrayUInt16 => PlgAny::ArrayUInt16(self.data.vec_u16.to_vec()),
-                PlgType::ArrayUInt32 => PlgAny::ArrayUInt32(self.data.vec_u32.to_vec()),
-                PlgType::ArrayUInt64 => PlgAny::ArrayUInt64(self.data.vec_u64.to_vec()),
-                PlgType::ArrayPointer => PlgAny::ArrayPointer(self.data.vec_usize.to_vec()),
-                PlgType::ArrayFloat => PlgAny::ArrayFloat(self.data.vec_f32.to_vec()),
-                PlgType::ArrayDouble => PlgAny::ArrayDouble(self.data.vec_f64.to_vec()),
-                PlgType::ArrayString => PlgAny::ArrayString(self.data.vec_str.to_string()),
-                PlgType::ArrayVector2 => PlgAny::ArrayVector2(self.data.vec_vec2.to_vec()),
-                PlgType::ArrayVector3 => PlgAny::ArrayVector3(self.data.vec_vec3.to_vec()),
-                PlgType::ArrayVector4 => PlgAny::ArrayVector4(self.data.vec_vec4.to_vec()),
-                PlgType::ArrayMatrix4x4 => PlgAny::ArrayMatrix4x4(self.data.vec_mat4x4.to_vec()),
+                Type::String => Any::String(self.data.str.to_string()),
+                Type::ArrayBool => Any::ArrayBool(self.data.vec_bool.to_vec()),
+                Type::ArrayChar8 => Any::ArrayChar8(self.data.vec_c8.to_vec()),
+                Type::ArrayChar16 => Any::ArrayChar16(self.data.vec_c16.to_vec()),
+                Type::ArrayInt8 => Any::ArrayInt8(self.data.vec_i8.to_vec()),
+                Type::ArrayInt16 => Any::ArrayInt16(self.data.vec_i16.to_vec()),
+                Type::ArrayInt32 => Any::ArrayInt32(self.data.vec_i32.to_vec()),
+                Type::ArrayInt64 => Any::ArrayInt64(self.data.vec_i64.to_vec()),
+                Type::ArrayUInt8 => Any::ArrayUInt8(self.data.vec_u8.to_vec()),
+                Type::ArrayUInt16 => Any::ArrayUInt16(self.data.vec_u16.to_vec()),
+                Type::ArrayUInt32 => Any::ArrayUInt32(self.data.vec_u32.to_vec()),
+                Type::ArrayUInt64 => Any::ArrayUInt64(self.data.vec_u64.to_vec()),
+                Type::ArrayPointer => Any::ArrayPointer(self.data.vec_usize.to_vec()),
+                Type::ArrayFloat => Any::ArrayFloat(self.data.vec_f32.to_vec()),
+                Type::ArrayDouble => Any::ArrayDouble(self.data.vec_f64.to_vec()),
+                Type::ArrayString => Any::ArrayString(self.data.vec_str.to_string()),
+                Type::ArrayVector2 => Any::ArrayVector2(self.data.vec_vec2.to_vec()),
+                Type::ArrayVector3 => Any::ArrayVector3(self.data.vec_vec3.to_vec()),
+                Type::ArrayVector4 => Any::ArrayVector4(self.data.vec_vec4.to_vec()),
+                Type::ArrayMatrix4x4 => Any::ArrayMatrix4x4(self.data.vec_mat4x4.to_vec()),
 
                 // Vector types: direct copy (they're Copy)
-                PlgType::Vector2 => PlgAny::Vector2(self.data.vec2),
-                PlgType::Vector3 => PlgAny::Vector3(self.data.vec3),
-                PlgType::Vector4 => PlgAny::Vector4(self.data.vec4),
+                Type::Vector2 => Any::Vector2(self.data.vec2),
+                Type::Vector3 => Any::Vector3(self.data.vec3),
+                Type::Vector4 => Any::Vector4(self.data.vec4),
 
                 // Unknown/unhandled types
-                _ => PlgAny::Invalid,
+                _ => Any::Invalid,
             }
         }
     }
 
     /// Get the current type of the variant
     #[must_use]
-    pub fn current(&self) -> PlgType {
+    pub fn current(&self) -> Type {
         self.current
     }
 
@@ -472,21 +472,21 @@ impl PlgVariant {
     }
 }
 
-impl Drop for PlgVariant {
+impl Drop for Var {
     fn drop(&mut self) {
         self.destroy();
     }
 }
 
-impl Clone for PlgVariant {
+impl Clone for Var {
     fn clone(&self) -> Self {
-        PlgVariant::new(&self.get())
+        Var::new(&self.get())
     }
 }
 
-impl Default for PlgVariant {
+impl Default for Var {
     fn default() -> Self {
-        PlgVariant::new(&PlgAny::Invalid)
+        Var::new(&Any::Invalid)
     }
 }
 
@@ -496,9 +496,9 @@ impl Default for PlgVariant {
 
 macro_rules! variant_from_primitive {
     ($rust_type:ty, $variant:ident) => {
-        impl From<$rust_type> for PlgAny {
+        impl From<$rust_type> for Any {
             fn from(value: $rust_type) -> Self {
-                PlgAny::$variant(value)
+                Any::$variant(value)
             }
         }
     };
@@ -516,27 +516,27 @@ variant_from_primitive!(u64, UInt64);
 variant_from_primitive!(usize, Pointer);
 variant_from_primitive!(f32, Float);
 variant_from_primitive!(f64, Double);
-variant_from_primitive!(Vector2, Vector2);
-variant_from_primitive!(Vector3, Vector3);
-variant_from_primitive!(Vector4, Vector4);
+variant_from_primitive!(Vec2, Vector2);
+variant_from_primitive!(Vec3, Vector3);
+variant_from_primitive!(Vec4, Vector4);
 
-impl From<String> for PlgAny {
+impl From<String> for Any {
     fn from(value: String) -> Self {
-        PlgAny::String(value)
+        Any::String(value)
     }
 }
 
-impl From<&str> for PlgAny {
+impl From<&str> for Any {
     fn from(value: &str) -> Self {
-        PlgAny::String(value.to_string())
+        Any::String(value.to_string())
     }
 }
 
 macro_rules! variant_from_vec {
     ($t:ty, $variant:ident) => {
-        impl From<Vec<$t>> for PlgAny {
+        impl From<Vec<$t>> for Any {
             fn from(value: Vec<$t>) -> Self {
-                PlgAny::$variant(value)
+                Any::$variant(value)
             }
         }
     };
@@ -555,20 +555,20 @@ variant_from_vec!(usize, ArrayPointer);
 variant_from_vec!(f32, ArrayFloat);
 variant_from_vec!(f64, ArrayDouble);
 variant_from_vec!(String, ArrayString);
-variant_from_vec!(Vector2, ArrayVector2);
-variant_from_vec!(Vector3, ArrayVector3);
-variant_from_vec!(Vector4, ArrayVector4);
-variant_from_vec!(Matrix4x4, ArrayMatrix4x4);
+variant_from_vec!(Vec2, ArrayVector2);
+variant_from_vec!(Vec3, ArrayVector3);
+variant_from_vec!(Vec4, ArrayVector4);
+variant_from_vec!(Mat4x4, ArrayMatrix4x4);
 
-// PlgVariant From PlgAny
-impl From<&PlgAny> for PlgVariant {
-    fn from(value: &PlgAny) -> Self {
-        PlgVariant::new(value)
+// Var From Any
+impl From<&Any> for Var {
+    fn from(value: &Any) -> Self {
+        Var::new(value)
     }
 }
 
-impl From<PlgAny> for PlgVariant {
-    fn from(value: PlgAny) -> Self {
-        PlgVariant::new(&value)
+impl From<Any> for Var {
+    fn from(value: Any) -> Self {
+        Var::new(&value)
     }
 }

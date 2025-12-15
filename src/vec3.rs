@@ -7,7 +7,7 @@ use std::ops::{Add, Sub, Mul, Div, Neg, Index, IndexMut, AddAssign, SubAssign, M
 /// the same memory layout as a struct with three f32 fields.
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Vector3 {
+pub struct Vec3 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
@@ -16,7 +16,7 @@ pub struct Vector3 {
 /// Epsilon for floating point comparisons
 const EPSILON: f32 = 1e-6;
 
-impl Vector3 {
+impl Vec3 {
     /// Create a new Vector3 with the given x, y, and z components
     #[must_use]
     pub const fn new(x: f32, y: f32, z: f32) -> Self {
@@ -76,7 +76,7 @@ impl Vector3 {
     /// **Deprecated:** Use the `+` operator instead: `v1 + v2`
     #[deprecated(since = "0.1.0", note = "Use the + operator instead")]
     #[must_use]
-    pub fn add(&self, vector: Vector3) -> Vector3 {
+    pub fn add(&self, vector: Vec3) -> Vec3 {
         *self + vector
     }
 
@@ -85,7 +85,7 @@ impl Vector3 {
     /// **Deprecated:** Use the `-` operator instead: `v1 - v2`
     #[deprecated(since = "0.1.0", note = "Use the - operator instead")]
     #[must_use]
-    pub fn subtract(&self, vector: Vector3) -> Vector3 {
+    pub fn subtract(&self, vector: Vec3) -> Vec3 {
         *self - vector
     }
 
@@ -94,7 +94,7 @@ impl Vector3 {
     /// **Deprecated:** Use the `*` operator instead: `v * scalar`
     #[deprecated(since = "0.1.0", note = "Use the * operator instead")]
     #[must_use]
-    pub fn scale(&self, scalar: f32) -> Vector3 {
+    pub fn scale(&self, scalar: f32) -> Vec3 {
         *self * scalar
     }
 
@@ -117,12 +117,12 @@ impl Vector3 {
     ///
     /// Returns a zero vector if the magnitude is too small (near zero).
     #[must_use]
-    pub fn normalize(&self) -> Vector3 {
+    pub fn normalize(&self) -> Vec3 {
         let mag_sq = self.magnitude_squared();
 
         // Use squared magnitude to avoid unnecessary sqrt when checking for zero
         if mag_sq < EPSILON * EPSILON {
-            return Vector3::zero();
+            return Vec3::zero();
         }
 
         let mag = mag_sq.sqrt();
@@ -133,7 +133,7 @@ impl Vector3 {
     ///
     /// Returns None if the magnitude is too small (near zero).
     #[must_use]
-    pub fn try_normalize(&self) -> Option<Vector3> {
+    pub fn try_normalize(&self) -> Option<Vec3> {
         let mag_sq = self.magnitude_squared();
 
         if mag_sq < EPSILON * EPSILON {
@@ -146,7 +146,7 @@ impl Vector3 {
 
     /// Calculate the dot product with another vector
     #[must_use]
-    pub fn dot(&self, vector: Vector3) -> f32 {
+    pub fn dot(&self, vector: Vec3) -> f32 {
         self.x * vector.x + self.y * vector.y + self.z * vector.z
     }
 
@@ -155,8 +155,8 @@ impl Vector3 {
     /// The cross product produces a vector perpendicular to both input vectors.
     /// The magnitude equals the area of the parallelogram formed by the two vectors.
     #[must_use]
-    pub fn cross(&self, vector: Vector3) -> Vector3 {
-        Vector3 {
+    pub fn cross(&self, vector: Vec3) -> Vec3 {
+        Vec3 {
             x: self.y * vector.z - self.z * vector.y,
             y: self.z * vector.x - self.x * vector.z,
             z: self.x * vector.y - self.y * vector.x,
@@ -165,7 +165,7 @@ impl Vector3 {
 
     /// Calculate the distance to another vector
     #[must_use]
-    pub fn distance_to(&self, vector: Vector3) -> f32 {
+    pub fn distance_to(&self, vector: Vec3) -> f32 {
         (*self - vector).magnitude()
     }
 
@@ -173,7 +173,7 @@ impl Vector3 {
     ///
     /// This is faster than `distance_to()` since it avoids the square root.
     #[must_use]
-    pub fn distance_squared_to(&self, vector: Vector3) -> f32 {
+    pub fn distance_squared_to(&self, vector: Vec3) -> f32 {
         (*self - vector).magnitude_squared()
     }
 
@@ -184,8 +184,8 @@ impl Vector3 {
     /// - t = 1.0 returns other
     /// - t = 0.5 returns the midpoint
     #[must_use]
-    pub fn lerp(&self, other: Vector3, t: f32) -> Vector3 {
-        Vector3 {
+    pub fn lerp(&self, other: Vec3, t: f32) -> Vec3 {
+        Vec3 {
             x: self.x + (other.x - self.x) * t,
             y: self.y + (other.y - self.y) * t,
             z: self.z + (other.z - self.z) * t,
@@ -197,7 +197,7 @@ impl Vector3 {
     /// This maintains constant speed on the unit sphere. Both vectors
     /// should be normalized for correct results.
     #[must_use]
-    pub fn slerp(&self, other: Vector3, t: f32) -> Vector3 {
+    pub fn slerp(&self, other: Vec3, t: f32) -> Vec3 {
         let dot = self.dot(other).clamp(-1.0, 1.0);
         let theta = dot.acos();
 
@@ -215,7 +215,7 @@ impl Vector3 {
 
     /// Clamp the vector's magnitude to a maximum value
     #[must_use]
-    pub fn clamp_magnitude(&self, max_magnitude: f32) -> Vector3 {
+    pub fn clamp_magnitude(&self, max_magnitude: f32) -> Vec3 {
         let mag_sq = self.magnitude_squared();
         let max_sq = max_magnitude * max_magnitude;
 
@@ -231,18 +231,18 @@ impl Vector3 {
     ///
     /// The normal should be normalized for correct results.
     #[must_use]
-    pub fn reflect(&self, normal: Vector3) -> Vector3 {
+    pub fn reflect(&self, normal: Vec3) -> Vec3 {
         *self - normal * (2.0 * self.dot(normal))
     }
 
     /// Project this vector onto another vector
     #[must_use]
-    pub fn project_onto(&self, other: Vector3) -> Vector3 {
+    pub fn project_onto(&self, other: Vec3) -> Vec3 {
         let dot = self.dot(other);
         let mag_sq = other.magnitude_squared();
 
         if mag_sq < EPSILON * EPSILON {
-            return Vector3::zero();
+            return Vec3::zero();
         }
 
         other * (dot / mag_sq)
@@ -252,7 +252,7 @@ impl Vector3 {
     ///
     /// Always returns a positive angle in the range [0, π]
     #[must_use]
-    pub fn angle_to(&self, other: Vector3) -> f32 {
+    pub fn angle_to(&self, other: Vec3) -> f32 {
         let dot = self.dot(other);
         let mags = self.magnitude() * other.magnitude();
 
@@ -268,7 +268,7 @@ impl Vector3 {
     /// The axis should be normalized for correct results.
     /// Uses Rodrigues' rotation formula.
     #[must_use]
-    pub fn rotate_around_axis(&self, axis: Vector3, angle: f32) -> Vector3 {
+    pub fn rotate_around_axis(&self, axis: Vec3, angle: f32) -> Vec3 {
         let cos = angle.cos();
         let sin = angle.sin();
 
@@ -279,7 +279,7 @@ impl Vector3 {
     ///
     /// Uses an epsilon value for floating point comparison
     #[must_use]
-    pub fn approx_eq(&self, other: Vector3) -> bool {
+    pub fn approx_eq(&self, other: Vec3) -> bool {
         (self.x - other.x).abs() < EPSILON
             && (self.y - other.y).abs() < EPSILON
             && (self.z - other.z).abs() < EPSILON
@@ -325,8 +325,8 @@ impl Vector3 {
 
     /// Return the component-wise minimum of two vectors
     #[must_use]
-    pub fn min(&self, other: Vector3) -> Vector3 {
-        Vector3 {
+    pub fn min(&self, other: Vec3) -> Vec3 {
+        Vec3 {
             x: self.x.min(other.x),
             y: self.y.min(other.y),
             z: self.z.min(other.z),
@@ -335,8 +335,8 @@ impl Vector3 {
 
     /// Return the component-wise maximum of two vectors
     #[must_use]
-    pub fn max(&self, other: Vector3) -> Vector3 {
-        Vector3 {
+    pub fn max(&self, other: Vec3) -> Vec3 {
+        Vec3 {
             x: self.x.max(other.x),
             y: self.y.max(other.y),
             z: self.z.max(other.z),
@@ -345,8 +345,8 @@ impl Vector3 {
 
     /// Clamp each component to a range
     #[must_use]
-    pub fn clamp(&self, min: Vector3, max: Vector3) -> Vector3 {
-        Vector3 {
+    pub fn clamp(&self, min: Vec3, max: Vec3) -> Vec3 {
+        Vec3 {
             x: self.x.clamp(min.x, max.x),
             y: self.y.clamp(min.y, max.y),
             z: self.z.clamp(min.z, max.z),
@@ -355,8 +355,8 @@ impl Vector3 {
 
     /// Return the component-wise absolute value
     #[must_use]
-    pub fn abs(&self) -> Vector3 {
-        Vector3 {
+    pub fn abs(&self) -> Vec3 {
+        Vec3 {
             x: self.x.abs(),
             y: self.y.abs(),
             z: self.z.abs(),
@@ -367,13 +367,13 @@ impl Vector3 {
     ///
     /// This gives the signed volume of the parallelepiped formed by three vectors.
     #[must_use]
-    pub fn triple_product(a: Vector3, b: Vector3, c: Vector3) -> f32 {
+    pub fn triple_product(a: Vec3, b: Vec3, c: Vec3) -> f32 {
         a.dot(b.cross(c))
     }
 
     /// Check if three vectors are coplanar (lie in the same plane)
     #[must_use]
-    pub fn are_coplanar(a: Vector3, b: Vector3, c: Vector3) -> bool {
+    pub fn are_coplanar(a: Vec3, b: Vec3, c: Vec3) -> bool {
         Self::triple_product(a, b, c).abs() < EPSILON
     }
 }
@@ -382,17 +382,17 @@ impl Vector3 {
 // Trait Implementations
 // ============================================
 
-impl Default for Vector3 {
+impl Default for Vec3 {
     fn default() -> Self {
         Self::zero()
     }
 }
 
-impl Add for Vector3 {
-    type Output = Vector3;
+impl Add for Vec3 {
+    type Output = Vec3;
 
-    fn add(self, other: Vector3) -> Vector3 {
-        Vector3 {
+    fn add(self, other: Vec3) -> Vec3 {
+        Vec3 {
             x: self.x + other.x,
             y: self.y + other.y,
             z: self.z + other.z,
@@ -400,11 +400,11 @@ impl Add for Vector3 {
     }
 }
 
-impl Sub for Vector3 {
-    type Output = Vector3;
+impl Sub for Vec3 {
+    type Output = Vec3;
 
-    fn sub(self, other: Vector3) -> Vector3 {
-        Vector3 {
+    fn sub(self, other: Vec3) -> Vec3 {
+        Vec3 {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
@@ -412,11 +412,11 @@ impl Sub for Vector3 {
     }
 }
 
-impl Mul<f32> for Vector3 {
-    type Output = Vector3;
+impl Mul<f32> for Vec3 {
+    type Output = Vec3;
 
-    fn mul(self, scalar: f32) -> Vector3 {
-        Vector3 {
+    fn mul(self, scalar: f32) -> Vec3 {
+        Vec3 {
             x: self.x * scalar,
             y: self.y * scalar,
             z: self.z * scalar,
@@ -424,11 +424,11 @@ impl Mul<f32> for Vector3 {
     }
 }
 
-impl Mul<Vector3> for f32 {
-    type Output = Vector3;
+impl Mul<Vec3> for f32 {
+    type Output = Vec3;
 
-    fn mul(self, vector: Vector3) -> Vector3 {
-        Vector3 {
+    fn mul(self, vector: Vec3) -> Vec3 {
+        Vec3 {
             x: vector.x * self,
             y: vector.y * self,
             z: vector.z * self,
@@ -436,11 +436,11 @@ impl Mul<Vector3> for f32 {
     }
 }
 
-impl Div<f32> for Vector3 {
-    type Output = Vector3;
+impl Div<f32> for Vec3 {
+    type Output = Vec3;
 
-    fn div(self, scalar: f32) -> Vector3 {
-        Vector3 {
+    fn div(self, scalar: f32) -> Vec3 {
+        Vec3 {
             x: self.x / scalar,
             y: self.y / scalar,
             z: self.z / scalar,
@@ -448,11 +448,11 @@ impl Div<f32> for Vector3 {
     }
 }
 
-impl Neg for Vector3 {
-    type Output = Vector3;
+impl Neg for Vec3 {
+    type Output = Vec3;
 
-    fn neg(self) -> Vector3 {
-        Vector3 {
+    fn neg(self) -> Vec3 {
+        Vec3 {
             x: -self.x,
             y: -self.y,
             z: -self.z,
@@ -460,23 +460,23 @@ impl Neg for Vector3 {
     }
 }
 
-impl AddAssign for Vector3 {
-    fn add_assign(&mut self, other: Vector3) {
+impl AddAssign for Vec3 {
+    fn add_assign(&mut self, other: Vec3) {
         self.x += other.x;
         self.y += other.y;
         self.z += other.z;
     }
 }
 
-impl SubAssign for Vector3 {
-    fn sub_assign(&mut self, other: Vector3) {
+impl SubAssign for Vec3 {
+    fn sub_assign(&mut self, other: Vec3) {
         self.x -= other.x;
         self.y -= other.y;
         self.z -= other.z;
     }
 }
 
-impl MulAssign<f32> for Vector3 {
+impl MulAssign<f32> for Vec3 {
     fn mul_assign(&mut self, scalar: f32) {
         self.x *= scalar;
         self.y *= scalar;
@@ -484,7 +484,7 @@ impl MulAssign<f32> for Vector3 {
     }
 }
 
-impl DivAssign<f32> for Vector3 {
+impl DivAssign<f32> for Vec3 {
     fn div_assign(&mut self, scalar: f32) {
         self.x /= scalar;
         self.y /= scalar;
@@ -492,7 +492,7 @@ impl DivAssign<f32> for Vector3 {
     }
 }
 
-impl Index<usize> for Vector3 {
+impl Index<usize> for Vec3 {
     type Output = f32;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -505,7 +505,7 @@ impl Index<usize> for Vector3 {
     }
 }
 
-impl IndexMut<usize> for Vector3 {
+impl IndexMut<usize> for Vec3 {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         match index {
             0 => &mut self.x,
@@ -516,32 +516,32 @@ impl IndexMut<usize> for Vector3 {
     }
 }
 
-impl fmt::Display for Vector3 {
+impl fmt::Display for Vec3 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Vector3({}, {}, {})", self.x, self.y, self.z)
     }
 }
 
-impl From<(f32, f32, f32)> for Vector3 {
+impl From<(f32, f32, f32)> for Vec3 {
     fn from((x, y, z): (f32, f32, f32)) -> Self {
         Self::new(x, y, z)
     }
 }
 
-impl From<[f32; 3]> for Vector3 {
+impl From<[f32; 3]> for Vec3 {
     fn from([x, y, z]: [f32; 3]) -> Self {
         Self::new(x, y, z)
     }
 }
 
-impl From<Vector3> for (f32, f32, f32) {
-    fn from(v: Vector3) -> Self {
+impl From<Vec3> for (f32, f32, f32) {
+    fn from(v: Vec3) -> Self {
         (v.x, v.y, v.z)
     }
 }
 
-impl From<Vector3> for [f32; 3] {
-    fn from(v: Vector3) -> Self {
+impl From<Vec3> for [f32; 3] {
+    fn from(v: Vec3) -> Self {
         [v.x, v.y, v.z]
     }
 }
@@ -556,24 +556,24 @@ mod tests {
 
     #[test]
     fn test_normalize_zero_vector() {
-        let zero = Vector3::zero();
-        assert_eq!(zero.normalize(), Vector3::zero());
+        let zero = Vec3::zero();
+        assert_eq!(zero.normalize(), Vec3::zero());
         assert_eq!(zero.try_normalize(), None);
     }
 
     #[test]
     fn test_approx_eq() {
-        let v1 = Vector3::new(1.0, 2.0, 3.0);
-        let v2 = Vector3::new(1.0 + EPSILON * 0.5, 2.0, 3.0);
+        let v1 = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(1.0 + EPSILON * 0.5, 2.0, 3.0);
         assert!(v1.approx_eq(v2));
     }
 
     #[test]
     fn test_cross_product() {
-        let x = Vector3::right();
-        let y = Vector3::up();
+        let x = Vec3::right();
+        let y = Vec3::up();
         let z = x.cross(y);
-        assert!(z.approx_eq(Vector3::forward()));
+        assert!(z.approx_eq(Vec3::forward()));
 
         // Cross product is perpendicular to both vectors
         assert!((x.dot(z)).abs() < EPSILON);
@@ -582,40 +582,40 @@ mod tests {
 
     #[test]
     fn test_lerp() {
-        let v1 = Vector3::zero();
-        let v2 = Vector3::new(10.0, 10.0, 10.0);
+        let v1 = Vec3::zero();
+        let v2 = Vec3::new(10.0, 10.0, 10.0);
         let mid = v1.lerp(v2, 0.5);
-        assert!(mid.approx_eq(Vector3::new(5.0, 5.0, 5.0)));
+        assert!(mid.approx_eq(Vec3::new(5.0, 5.0, 5.0)));
     }
 
     #[test]
     fn test_operators() {
-        let v1 = Vector3::new(1.0, 2.0, 3.0);
-        let v2 = Vector3::new(4.0, 5.0, 6.0);
+        let v1 = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(4.0, 5.0, 6.0);
 
-        assert!((v1 + v2).approx_eq(Vector3::new(5.0, 7.0, 9.0)));
-        assert!((v1 - v2).approx_eq(Vector3::new(-3.0, -3.0, -3.0)));
-        assert!((v1 * 2.0).approx_eq(Vector3::new(2.0, 4.0, 6.0)));
-        assert!((2.0 * v1).approx_eq(Vector3::new(2.0, 4.0, 6.0)));
-        assert!((-v1).approx_eq(Vector3::new(-1.0, -2.0, -3.0)));
+        assert!((v1 + v2).approx_eq(Vec3::new(5.0, 7.0, 9.0)));
+        assert!((v1 - v2).approx_eq(Vec3::new(-3.0, -3.0, -3.0)));
+        assert!((v1 * 2.0).approx_eq(Vec3::new(2.0, 4.0, 6.0)));
+        assert!((2.0 * v1).approx_eq(Vec3::new(2.0, 4.0, 6.0)));
+        assert!((-v1).approx_eq(Vec3::new(-1.0, -2.0, -3.0)));
     }
 
     #[test]
     fn test_triple_product() {
-        let x = Vector3::right();
-        let y = Vector3::up();
-        let z = Vector3::forward();
+        let x = Vec3::right();
+        let y = Vec3::up();
+        let z = Vec3::forward();
 
         // Right-handed coordinate system has volume 1
-        assert!((Vector3::triple_product(x, y, z) - 1.0).abs() < EPSILON);
+        assert!((Vec3::triple_product(x, y, z) - 1.0).abs() < EPSILON);
     }
 
     #[test]
     fn test_rotation() {
         use std::f32::consts::PI;
 
-        let v = Vector3::right();
-        let rotated = v.rotate_around_axis(Vector3::up(), PI / 2.0);
-        assert!(rotated.approx_eq(Vector3::forward()));
+        let v = Vec3::right();
+        let rotated = v.rotate_around_axis(Vec3::up(), PI / 2.0);
+        assert!(rotated.approx_eq(Vec3::forward()));
     }
 }

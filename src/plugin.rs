@@ -2,23 +2,23 @@ use std::sync::OnceLock;
 use crate::{import_symbol, vector::*, string::*, variant::*};
 
 import_symbol!(get_method_ptr, GET_METHOD_PTR, init_get_method_ptr, (name:*const u8, size:usize) -> usize);
-import_symbol!(get_base_dir, GET_BASE_DIR, init_get_base_dir, () -> PlgString);
-import_symbol!(get_extensions_dir, GET_EXTENSIONS_DIR, init_get_extensions_dir, () -> PlgString);
-import_symbol!(get_configs_dir, GET_CONFIGS_DIR, init_get_configs_dir, () -> PlgString);
-import_symbol!(get_data_dir, GET_DATA_DIR, init_get_data_dir, () -> PlgString);
-import_symbol!(get_logs_dir, GET_LOGS_DIR, init_get_logs_dir, () -> PlgString);
-import_symbol!(get_cache_dir, GET_CACHE_DIR, init_get_cache_dir, () -> PlgString);
+import_symbol!(get_base_dir, GET_BASE_DIR, init_get_base_dir, () -> Str);
+import_symbol!(get_extensions_dir, GET_EXTENSIONS_DIR, init_get_extensions_dir, () -> Str);
+import_symbol!(get_configs_dir, GET_CONFIGS_DIR, init_get_configs_dir, () -> Str);
+import_symbol!(get_data_dir, GET_DATA_DIR, init_get_data_dir, () -> Str);
+import_symbol!(get_logs_dir, GET_LOGS_DIR, init_get_logs_dir, () -> Str);
+import_symbol!(get_cache_dir, GET_CACHE_DIR, init_get_cache_dir, () -> Str);
 import_symbol!(is_extension_loaded, IS_EXTENSION_LOADED, init_is_extension_loaded, (name:*const u8, nsize:usize, constraint:*const u8, csize:usize) -> bool);
 
 import_symbol!(get_plugin_id, GET_PLUGIN_ID, init_get_plugin_id, (handle:PluginHandle) -> isize);
-import_symbol!(get_plugin_name, GET_PLUGIN_NAME, init_get_plugin_name, (handle:PluginHandle) -> PlgString);
-import_symbol!(get_plugin_description, GET_PLUGIN_DESCRIPTION, init_get_plugin_description, (handle:PluginHandle) -> PlgString);
-import_symbol!(get_plugin_version, GET_PLUGIN_VERSION, init_get_plugin_version, (handle:PluginHandle) -> PlgString);
-import_symbol!(get_plugin_author, GET_PLUGIN_AUTHOR, init_get_plugin_author, (handle:PluginHandle) -> PlgString);
-import_symbol!(get_plugin_website, GET_PLUGIN_WEBSITE, init_get_plugin_website, (handle:PluginHandle) -> PlgString);
-import_symbol!(get_plugin_license, GET_PLUGIN_LICENSE, init_get_plugin_license, (handle:PluginHandle) -> PlgString);
-import_symbol!(get_plugin_location, GET_PLUGIN_LOCATION, init_get_plugin_location, (handle:PluginHandle) -> PlgString);
-import_symbol!(get_plugin_dependencies, GET_PLUGIN_DEPENDENCIES, init_get_plugin_dependencies, (handle:PluginHandle) -> PlgVector<PlgString>);
+import_symbol!(get_plugin_name, GET_PLUGIN_NAME, init_get_plugin_name, (handle:PluginHandle) -> Str);
+import_symbol!(get_plugin_description, GET_PLUGIN_DESCRIPTION, init_get_plugin_description, (handle:PluginHandle) -> Str);
+import_symbol!(get_plugin_version, GET_PLUGIN_VERSION, init_get_plugin_version, (handle:PluginHandle) -> Str);
+import_symbol!(get_plugin_author, GET_PLUGIN_AUTHOR, init_get_plugin_author, (handle:PluginHandle) -> Str);
+import_symbol!(get_plugin_website, GET_PLUGIN_WEBSITE, init_get_plugin_website, (handle:PluginHandle) -> Str);
+import_symbol!(get_plugin_license, GET_PLUGIN_LICENSE, init_get_plugin_license, (handle:PluginHandle) -> Str);
+import_symbol!(get_plugin_location, GET_PLUGIN_LOCATION, init_get_plugin_location, (handle:PluginHandle) -> Str);
+import_symbol!(get_plugin_dependencies, GET_PLUGIN_DEPENDENCIES, init_get_plugin_dependencies, (handle:PluginHandle) -> Arr<Str>);
 
 // Constants
 const K_API_VERSION: i32 = 1;

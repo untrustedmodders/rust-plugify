@@ -13,7 +13,7 @@ use std::ops::{Add, Sub, Mul, Div, Neg, Index, IndexMut, AddAssign, SubAssign, M
 /// - 4D mathematical operations
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Vector4 {
+pub struct Vec4 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
@@ -23,7 +23,7 @@ pub struct Vector4 {
 /// Epsilon for floating point comparisons
 const EPSILON: f32 = 1e-6;
 
-impl Vector4 {
+impl Vec4 {
     /// Create a new Vector4 with the given x, y, z, and w components
     #[must_use]
     pub const fn new(x: f32, y: f32, z: f32, w: f32) -> Self {
@@ -71,7 +71,7 @@ impl Vector4 {
     /// **Deprecated:** Use the `+` operator instead: `v1 + v2`
     #[deprecated(since = "0.1.0", note = "Use the + operator instead")]
     #[must_use]
-    pub fn add(&self, vector: Vector4) -> Vector4 {
+    pub fn add(&self, vector: Vec4) -> Vec4 {
         *self + vector
     }
 
@@ -80,7 +80,7 @@ impl Vector4 {
     /// **Deprecated:** Use the `-` operator instead: `v1 - v2`
     #[deprecated(since = "0.1.0", note = "Use the - operator instead")]
     #[must_use]
-    pub fn subtract(&self, vector: Vector4) -> Vector4 {
+    pub fn subtract(&self, vector: Vec4) -> Vec4 {
         *self - vector
     }
 
@@ -89,7 +89,7 @@ impl Vector4 {
     /// **Deprecated:** Use the `*` operator instead: `v * scalar`
     #[deprecated(since = "0.1.0", note = "Use the * operator instead")]
     #[must_use]
-    pub fn scale(&self, scalar: f32) -> Vector4 {
+    pub fn scale(&self, scalar: f32) -> Vec4 {
         *self * scalar
     }
 
@@ -112,12 +112,12 @@ impl Vector4 {
     ///
     /// Returns a zero vector if the magnitude is too small (near zero).
     #[must_use]
-    pub fn normalize(&self) -> Vector4 {
+    pub fn normalize(&self) -> Vec4 {
         let mag_sq = self.magnitude_squared();
 
         // Use squared magnitude to avoid unnecessary sqrt when checking for zero
         if mag_sq < EPSILON * EPSILON {
-            return Vector4::zero();
+            return Vec4::zero();
         }
 
         let mag = mag_sq.sqrt();
@@ -128,7 +128,7 @@ impl Vector4 {
     ///
     /// Returns None if the magnitude is too small (near zero).
     #[must_use]
-    pub fn try_normalize(&self) -> Option<Vector4> {
+    pub fn try_normalize(&self) -> Option<Vec4> {
         let mag_sq = self.magnitude_squared();
 
         if mag_sq < EPSILON * EPSILON {
@@ -141,13 +141,13 @@ impl Vector4 {
 
     /// Calculate the dot product with another vector
     #[must_use]
-    pub fn dot(&self, vector: Vector4) -> f32 {
+    pub fn dot(&self, vector: Vec4) -> f32 {
         self.x * vector.x + self.y * vector.y + self.z * vector.z + self.w * vector.w
     }
 
     /// Calculate the distance to another vector
     #[must_use]
-    pub fn distance_to(&self, vector: Vector4) -> f32 {
+    pub fn distance_to(&self, vector: Vec4) -> f32 {
         (*self - vector).magnitude()
     }
 
@@ -155,7 +155,7 @@ impl Vector4 {
     ///
     /// This is faster than `distance_to()` since it avoids the square root.
     #[must_use]
-    pub fn distance_squared_to(&self, vector: Vector4) -> f32 {
+    pub fn distance_squared_to(&self, vector: Vec4) -> f32 {
         (*self - vector).magnitude_squared()
     }
 
@@ -166,8 +166,8 @@ impl Vector4 {
     /// - t = 1.0 returns other
     /// - t = 0.5 returns the midpoint
     #[must_use]
-    pub fn lerp(&self, other: Vector4, t: f32) -> Vector4 {
-        Vector4 {
+    pub fn lerp(&self, other: Vec4, t: f32) -> Vec4 {
+        Vec4 {
             x: self.x + (other.x - self.x) * t,
             y: self.y + (other.y - self.y) * t,
             z: self.z + (other.z - self.z) * t,
@@ -177,7 +177,7 @@ impl Vector4 {
 
     /// Clamp the vector's magnitude to a maximum value
     #[must_use]
-    pub fn clamp_magnitude(&self, max_magnitude: f32) -> Vector4 {
+    pub fn clamp_magnitude(&self, max_magnitude: f32) -> Vec4 {
         let mag_sq = self.magnitude_squared();
         let max_sq = max_magnitude * max_magnitude;
 
@@ -191,12 +191,12 @@ impl Vector4 {
 
     /// Project this vector onto another vector
     #[must_use]
-    pub fn project_onto(&self, other: Vector4) -> Vector4 {
+    pub fn project_onto(&self, other: Vec4) -> Vec4 {
         let dot = self.dot(other);
         let mag_sq = other.magnitude_squared();
 
         if mag_sq < EPSILON * EPSILON {
-            return Vector4::zero();
+            return Vec4::zero();
         }
 
         other * (dot / mag_sq)
@@ -206,7 +206,7 @@ impl Vector4 {
     ///
     /// Always returns a positive angle in the range [0, π]
     #[must_use]
-    pub fn angle_to(&self, other: Vector4) -> f32 {
+    pub fn angle_to(&self, other: Vec4) -> f32 {
         let dot = self.dot(other);
         let mags = self.magnitude() * other.magnitude();
 
@@ -221,7 +221,7 @@ impl Vector4 {
     ///
     /// Uses an epsilon value for floating point comparison
     #[must_use]
-    pub fn approx_eq(&self, other: Vector4) -> bool {
+    pub fn approx_eq(&self, other: Vec4) -> bool {
         (self.x - other.x).abs() < EPSILON
             && (self.y - other.y).abs() < EPSILON
             && (self.z - other.z).abs() < EPSILON
@@ -270,8 +270,8 @@ impl Vector4 {
 
     /// Return the component-wise minimum of two vectors
     #[must_use]
-    pub fn min(&self, other: Vector4) -> Vector4 {
-        Vector4 {
+    pub fn min(&self, other: Vec4) -> Vec4 {
+        Vec4 {
             x: self.x.min(other.x),
             y: self.y.min(other.y),
             z: self.z.min(other.z),
@@ -281,8 +281,8 @@ impl Vector4 {
 
     /// Return the component-wise maximum of two vectors
     #[must_use]
-    pub fn max(&self, other: Vector4) -> Vector4 {
-        Vector4 {
+    pub fn max(&self, other: Vec4) -> Vec4 {
+        Vec4 {
             x: self.x.max(other.x),
             y: self.y.max(other.y),
             z: self.z.max(other.z),
@@ -292,8 +292,8 @@ impl Vector4 {
 
     /// Clamp each component to a range
     #[must_use]
-    pub fn clamp(&self, min: Vector4, max: Vector4) -> Vector4 {
-        Vector4 {
+    pub fn clamp(&self, min: Vec4, max: Vec4) -> Vec4 {
+        Vec4 {
             x: self.x.clamp(min.x, max.x),
             y: self.y.clamp(min.y, max.y),
             z: self.z.clamp(min.z, max.z),
@@ -303,8 +303,8 @@ impl Vector4 {
 
     /// Return the component-wise absolute value
     #[must_use]
-    pub fn abs(&self) -> Vector4 {
-        Vector4 {
+    pub fn abs(&self) -> Vec4 {
+        Vec4 {
             x: self.x.abs(),
             y: self.y.abs(),
             z: self.z.abs(),
@@ -348,17 +348,17 @@ impl Vector4 {
 // Trait Implementations
 // ============================================
 
-impl Default for Vector4 {
+impl Default for Vec4 {
     fn default() -> Self {
         Self::zero()
     }
 }
 
-impl Add for Vector4 {
-    type Output = Vector4;
+impl Add for Vec4 {
+    type Output = Vec4;
 
-    fn add(self, other: Vector4) -> Vector4 {
-        Vector4 {
+    fn add(self, other: Vec4) -> Vec4 {
+        Vec4 {
             x: self.x + other.x,
             y: self.y + other.y,
             z: self.z + other.z,
@@ -367,11 +367,11 @@ impl Add for Vector4 {
     }
 }
 
-impl Sub for Vector4 {
-    type Output = Vector4;
+impl Sub for Vec4 {
+    type Output = Vec4;
 
-    fn sub(self, other: Vector4) -> Vector4 {
-        Vector4 {
+    fn sub(self, other: Vec4) -> Vec4 {
+        Vec4 {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
@@ -380,11 +380,11 @@ impl Sub for Vector4 {
     }
 }
 
-impl Mul<f32> for Vector4 {
-    type Output = Vector4;
+impl Mul<f32> for Vec4 {
+    type Output = Vec4;
 
-    fn mul(self, scalar: f32) -> Vector4 {
-        Vector4 {
+    fn mul(self, scalar: f32) -> Vec4 {
+        Vec4 {
             x: self.x * scalar,
             y: self.y * scalar,
             z: self.z * scalar,
@@ -393,11 +393,11 @@ impl Mul<f32> for Vector4 {
     }
 }
 
-impl Mul<Vector4> for f32 {
-    type Output = Vector4;
+impl Mul<Vec4> for f32 {
+    type Output = Vec4;
 
-    fn mul(self, vector: Vector4) -> Vector4 {
-        Vector4 {
+    fn mul(self, vector: Vec4) -> Vec4 {
+        Vec4 {
             x: vector.x * self,
             y: vector.y * self,
             z: vector.z * self,
@@ -406,11 +406,11 @@ impl Mul<Vector4> for f32 {
     }
 }
 
-impl Div<f32> for Vector4 {
-    type Output = Vector4;
+impl Div<f32> for Vec4 {
+    type Output = Vec4;
 
-    fn div(self, scalar: f32) -> Vector4 {
-        Vector4 {
+    fn div(self, scalar: f32) -> Vec4 {
+        Vec4 {
             x: self.x / scalar,
             y: self.y / scalar,
             z: self.z / scalar,
@@ -419,11 +419,11 @@ impl Div<f32> for Vector4 {
     }
 }
 
-impl Neg for Vector4 {
-    type Output = Vector4;
+impl Neg for Vec4 {
+    type Output = Vec4;
 
-    fn neg(self) -> Vector4 {
-        Vector4 {
+    fn neg(self) -> Vec4 {
+        Vec4 {
             x: -self.x,
             y: -self.y,
             z: -self.z,
@@ -432,8 +432,8 @@ impl Neg for Vector4 {
     }
 }
 
-impl AddAssign for Vector4 {
-    fn add_assign(&mut self, other: Vector4) {
+impl AddAssign for Vec4 {
+    fn add_assign(&mut self, other: Vec4) {
         self.x += other.x;
         self.y += other.y;
         self.z += other.z;
@@ -441,8 +441,8 @@ impl AddAssign for Vector4 {
     }
 }
 
-impl SubAssign for Vector4 {
-    fn sub_assign(&mut self, other: Vector4) {
+impl SubAssign for Vec4 {
+    fn sub_assign(&mut self, other: Vec4) {
         self.x -= other.x;
         self.y -= other.y;
         self.z -= other.z;
@@ -450,7 +450,7 @@ impl SubAssign for Vector4 {
     }
 }
 
-impl MulAssign<f32> for Vector4 {
+impl MulAssign<f32> for Vec4 {
     fn mul_assign(&mut self, scalar: f32) {
         self.x *= scalar;
         self.y *= scalar;
@@ -459,7 +459,7 @@ impl MulAssign<f32> for Vector4 {
     }
 }
 
-impl DivAssign<f32> for Vector4 {
+impl DivAssign<f32> for Vec4 {
     fn div_assign(&mut self, scalar: f32) {
         self.x /= scalar;
         self.y /= scalar;
@@ -468,7 +468,7 @@ impl DivAssign<f32> for Vector4 {
     }
 }
 
-impl Index<usize> for Vector4 {
+impl Index<usize> for Vec4 {
     type Output = f32;
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -482,7 +482,7 @@ impl Index<usize> for Vector4 {
     }
 }
 
-impl IndexMut<usize> for Vector4 {
+impl IndexMut<usize> for Vec4 {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         match index {
             0 => &mut self.x,
@@ -494,32 +494,32 @@ impl IndexMut<usize> for Vector4 {
     }
 }
 
-impl fmt::Display for Vector4 {
+impl fmt::Display for Vec4 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Vector4({}, {}, {}, {})", self.x, self.y, self.z, self.w)
     }
 }
 
-impl From<(f32, f32, f32, f32)> for Vector4 {
+impl From<(f32, f32, f32, f32)> for Vec4 {
     fn from((x, y, z, w): (f32, f32, f32, f32)) -> Self {
         Self::new(x, y, z, w)
     }
 }
 
-impl From<[f32; 4]> for Vector4 {
+impl From<[f32; 4]> for Vec4 {
     fn from([x, y, z, w]: [f32; 4]) -> Self {
         Self::new(x, y, z, w)
     }
 }
 
-impl From<Vector4> for (f32, f32, f32, f32) {
-    fn from(v: Vector4) -> Self {
+impl From<Vec4> for (f32, f32, f32, f32) {
+    fn from(v: Vec4) -> Self {
         (v.x, v.y, v.z, v.w)
     }
 }
 
-impl From<Vector4> for [f32; 4] {
-    fn from(v: Vector4) -> Self {
+impl From<Vec4> for [f32; 4] {
+    fn from(v: Vec4) -> Self {
         [v.x, v.y, v.z, v.w]
     }
 }
@@ -534,64 +534,64 @@ mod tests {
 
     #[test]
     fn test_normalize_zero_vector() {
-        let zero = Vector4::zero();
-        assert_eq!(zero.normalize(), Vector4::zero());
+        let zero = Vec4::zero();
+        assert_eq!(zero.normalize(), Vec4::zero());
         assert_eq!(zero.try_normalize(), None);
     }
 
     #[test]
     fn test_approx_eq() {
-        let v1 = Vector4::new(1.0, 2.0, 3.0, 4.0);
-        let v2 = Vector4::new(1.0 + EPSILON * 0.5, 2.0, 3.0, 4.0);
+        let v1 = Vec4::new(1.0, 2.0, 3.0, 4.0);
+        let v2 = Vec4::new(1.0 + EPSILON * 0.5, 2.0, 3.0, 4.0);
         assert!(v1.approx_eq(v2));
     }
 
     #[test]
     fn test_homogeneous_coordinates() {
-        let pos = Vector4::position(1.0, 2.0, 3.0);
+        let pos = Vec4::position(1.0, 2.0, 3.0);
         assert!(pos.is_position());
         assert!(!pos.is_direction());
 
-        let dir = Vector4::direction(1.0, 0.0, 0.0);
+        let dir = Vec4::direction(1.0, 0.0, 0.0);
         assert!(dir.is_direction());
         assert!(!dir.is_position());
     }
 
     #[test]
     fn test_perspective_divide() {
-        let v = Vector4::new(10.0, 20.0, 30.0, 2.0);
+        let v = Vec4::new(10.0, 20.0, 30.0, 2.0);
         let (x, y, z) = v.perspective_divide().unwrap();
         assert!((x - 5.0).abs() < EPSILON);
         assert!((y - 10.0).abs() < EPSILON);
         assert!((z - 15.0).abs() < EPSILON);
 
-        let zero_w = Vector4::new(1.0, 2.0, 3.0, 0.0);
+        let zero_w = Vec4::new(1.0, 2.0, 3.0, 0.0);
         assert_eq!(zero_w.perspective_divide(), None);
     }
 
     #[test]
     fn test_lerp() {
-        let v1 = Vector4::zero();
-        let v2 = Vector4::unit();
+        let v1 = Vec4::zero();
+        let v2 = Vec4::unit();
         let mid = v1.lerp(v2, 0.5);
-        assert!(mid.approx_eq(Vector4::new(0.5, 0.5, 0.5, 0.5)));
+        assert!(mid.approx_eq(Vec4::new(0.5, 0.5, 0.5, 0.5)));
     }
 
     #[test]
     fn test_operators() {
-        let v1 = Vector4::new(1.0, 2.0, 3.0, 4.0);
-        let v2 = Vector4::new(5.0, 6.0, 7.0, 8.0);
+        let v1 = Vec4::new(1.0, 2.0, 3.0, 4.0);
+        let v2 = Vec4::new(5.0, 6.0, 7.0, 8.0);
 
-        assert!((v1 + v2).approx_eq(Vector4::new(6.0, 8.0, 10.0, 12.0)));
-        assert!((v1 - v2).approx_eq(Vector4::new(-4.0, -4.0, -4.0, -4.0)));
-        assert!((v1 * 2.0).approx_eq(Vector4::new(2.0, 4.0, 6.0, 8.0)));
-        assert!((2.0 * v1).approx_eq(Vector4::new(2.0, 4.0, 6.0, 8.0)));
-        assert!((-v1).approx_eq(Vector4::new(-1.0, -2.0, -3.0, -4.0)));
+        assert!((v1 + v2).approx_eq(Vec4::new(6.0, 8.0, 10.0, 12.0)));
+        assert!((v1 - v2).approx_eq(Vec4::new(-4.0, -4.0, -4.0, -4.0)));
+        assert!((v1 * 2.0).approx_eq(Vec4::new(2.0, 4.0, 6.0, 8.0)));
+        assert!((2.0 * v1).approx_eq(Vec4::new(2.0, 4.0, 6.0, 8.0)));
+        assert!((-v1).approx_eq(Vec4::new(-1.0, -2.0, -3.0, -4.0)));
     }
 
     #[test]
     fn test_rgba() {
-        let color = Vector4::rgba(1.0, 0.5, 0.25, 1.0);
+        let color = Vec4::rgba(1.0, 0.5, 0.25, 1.0);
         assert_eq!(color.x, 1.0);   // red
         assert_eq!(color.y, 0.5);   // green
         assert_eq!(color.z, 0.25);  // blue

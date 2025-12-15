@@ -1,6 +1,6 @@
 use std::fmt;
 use std::ops::{Add, Sub, Mul, Neg, Index, IndexMut, AddAssign, SubAssign, MulAssign};
-use crate::Vector4;
+use crate::Vec4;
 
 /// A 4x4 matrix with f32 components
 ///
@@ -14,7 +14,7 @@ use crate::Vector4;
 /// - Homogeneous coordinate transformations
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Matrix4x4 {
+pub struct Mat4x4 {
     /// Matrix elements in row-major order: m[row][column]
     pub m: [[f32; 4]; 4],
 }
@@ -22,7 +22,7 @@ pub struct Matrix4x4 {
 /// Epsilon for floating point comparisons
 const EPSILON: f32 = 1e-6;
 
-impl Matrix4x4 {
+impl Mat4x4 {
     /// Create a new matrix from a 2D array
     ///
     /// Elements are provided in row-major order: `[[row0], [row1], [row2], [row3]]`
@@ -266,7 +266,7 @@ impl Matrix4x4 {
     /// **Deprecated:** Use the `+` operator instead: `m1 + m2`
     #[deprecated(since = "0.1.0", note = "Use the + operator instead")]
     #[must_use]
-    pub fn add(&self, matrix: Matrix4x4) -> Matrix4x4 {
+    pub fn add(&self, matrix: Mat4x4) -> Mat4x4 {
         *self + matrix
     }
 
@@ -275,7 +275,7 @@ impl Matrix4x4 {
     /// **Deprecated:** Use the `-` operator instead: `m1 - m2`
     #[deprecated(since = "0.1.0", note = "Use the - operator instead")]
     #[must_use]
-    pub fn subtract(&self, matrix: Matrix4x4) -> Matrix4x4 {
+    pub fn subtract(&self, matrix: Mat4x4) -> Mat4x4 {
         *self - matrix
     }
 
@@ -284,7 +284,7 @@ impl Matrix4x4 {
     /// **Deprecated:** Use the `*` operator instead: `m1 * m2`
     #[deprecated(since = "0.1.0", note = "Use the * operator instead")]
     #[must_use]
-    pub fn multiply(&self, matrix: Matrix4x4) -> Matrix4x4 {
+    pub fn multiply(&self, matrix: Mat4x4) -> Mat4x4 {
         *self * matrix
     }
 
@@ -293,20 +293,20 @@ impl Matrix4x4 {
     /// **Deprecated:** Use the `*` operator instead: `matrix * vector`
     #[deprecated(since = "0.1.0", note = "Use the * operator instead")]
     #[must_use]
-    pub fn multiply_vector(&self, vector: Vector4) -> Vector4 {
+    pub fn multiply_vector(&self, vector: Vec4) -> Vec4 {
         *self * vector
     }
 
     /// Transpose the matrix (swap rows and columns)
     #[must_use]
-    pub fn transpose(&self) -> Matrix4x4 {
+    pub fn transpose(&self) -> Mat4x4 {
         let mut result = [[0.0; 4]; 4];
         for i in 0..4 {
             for j in 0..4 {
                 result[j][i] = self.m[i][j];
             }
         }
-        Matrix4x4 { m: result }
+        Mat4x4 { m: result }
     }
 
     /// Calculate the determinant of the matrix
@@ -336,7 +336,7 @@ impl Matrix4x4 {
     ///
     /// Returns None if the matrix is not invertible (determinant is zero).
     #[must_use]
-    pub fn inverse(&self) -> Option<Matrix4x4> {
+    pub fn inverse(&self) -> Option<Mat4x4> {
         let det = self.determinant();
 
         if det.abs() < EPSILON {
@@ -413,14 +413,14 @@ impl Matrix4x4 {
             m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
             m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])) * inv_det;
 
-        Some(Matrix4x4 { m: result })
+        Some(Mat4x4 { m: result })
     }
 
     /// Check if this matrix is approximately equal to another
     ///
     /// Uses an epsilon value for floating point comparison
     #[must_use]
-    pub fn approx_eq(&self, other: &Matrix4x4) -> bool {
+    pub fn approx_eq(&self, other: &Mat4x4) -> bool {
         for i in 0..4 {
             for j in 0..4 {
                 if (self.m[i][j] - other.m[i][j]).abs() >= EPSILON {
@@ -466,44 +466,44 @@ impl Matrix4x4 {
 // Trait Implementations
 // ============================================
 
-impl Default for Matrix4x4 {
+impl Default for Mat4x4 {
     fn default() -> Self {
         Self::identity()
     }
 }
 
-impl Add for Matrix4x4 {
-    type Output = Matrix4x4;
+impl Add for Mat4x4 {
+    type Output = Mat4x4;
 
-    fn add(self, other: Matrix4x4) -> Matrix4x4 {
+    fn add(self, other: Mat4x4) -> Mat4x4 {
         let mut result = [[0.0; 4]; 4];
         for i in 0..4 {
             for j in 0..4 {
                 result[i][j] = self.m[i][j] + other.m[i][j];
             }
         }
-        Matrix4x4 { m: result }
+        Mat4x4 { m: result }
     }
 }
 
-impl Sub for Matrix4x4 {
-    type Output = Matrix4x4;
+impl Sub for Mat4x4 {
+    type Output = Mat4x4;
 
-    fn sub(self, other: Matrix4x4) -> Matrix4x4 {
+    fn sub(self, other: Mat4x4) -> Mat4x4 {
         let mut result = [[0.0; 4]; 4];
         for i in 0..4 {
             for j in 0..4 {
                 result[i][j] = self.m[i][j] - other.m[i][j];
             }
         }
-        Matrix4x4 { m: result }
+        Mat4x4 { m: result }
     }
 }
 
-impl Mul for Matrix4x4 {
-    type Output = Matrix4x4;
+impl Mul for Mat4x4 {
+    type Output = Mat4x4;
 
-    fn mul(self, other: Matrix4x4) -> Matrix4x4 {
+    fn mul(self, other: Mat4x4) -> Mat4x4 {
         let mut result = [[0.0; 4]; 4];
         for i in 0..4 {
             for j in 0..4 {
@@ -512,15 +512,15 @@ impl Mul for Matrix4x4 {
                 }
             }
         }
-        Matrix4x4 { m: result }
+        Mat4x4 { m: result }
     }
 }
 
-impl Mul<Vector4> for Matrix4x4 {
-    type Output = Vector4;
+impl Mul<Vec4> for Mat4x4 {
+    type Output = Vec4;
 
-    fn mul(self, vector: Vector4) -> Vector4 {
-        Vector4 {
+    fn mul(self, vector: Vec4) -> Vec4 {
+        Vec4 {
             x: self.m[0][0] * vector.x + self.m[0][1] * vector.y + self.m[0][2] * vector.z + self.m[0][3] * vector.w,
             y: self.m[1][0] * vector.x + self.m[1][1] * vector.y + self.m[1][2] * vector.z + self.m[1][3] * vector.w,
             z: self.m[2][0] * vector.x + self.m[2][1] * vector.y + self.m[2][2] * vector.z + self.m[2][3] * vector.w,
@@ -529,38 +529,38 @@ impl Mul<Vector4> for Matrix4x4 {
     }
 }
 
-impl Mul<f32> for Matrix4x4 {
-    type Output = Matrix4x4;
+impl Mul<f32> for Mat4x4 {
+    type Output = Mat4x4;
 
-    fn mul(self, scalar: f32) -> Matrix4x4 {
+    fn mul(self, scalar: f32) -> Mat4x4 {
         let mut result = [[0.0; 4]; 4];
         for i in 0..4 {
             for j in 0..4 {
                 result[i][j] = self.m[i][j] * scalar;
             }
         }
-        Matrix4x4 { m: result }
+        Mat4x4 { m: result }
     }
 }
 
-impl Mul<Matrix4x4> for f32 {
-    type Output = Matrix4x4;
+impl Mul<Mat4x4> for f32 {
+    type Output = Mat4x4;
 
-    fn mul(self, matrix: Matrix4x4) -> Matrix4x4 {
+    fn mul(self, matrix: Mat4x4) -> Mat4x4 {
         matrix * self
     }
 }
 
-impl Neg for Matrix4x4 {
-    type Output = Matrix4x4;
+impl Neg for Mat4x4 {
+    type Output = Mat4x4;
 
-    fn neg(self) -> Matrix4x4 {
+    fn neg(self) -> Mat4x4 {
         self * -1.0
     }
 }
 
-impl AddAssign for Matrix4x4 {
-    fn add_assign(&mut self, other: Matrix4x4) {
+impl AddAssign for Mat4x4 {
+    fn add_assign(&mut self, other: Mat4x4) {
         for i in 0..4 {
             for j in 0..4 {
                 self.m[i][j] += other.m[i][j];
@@ -569,8 +569,8 @@ impl AddAssign for Matrix4x4 {
     }
 }
 
-impl SubAssign for Matrix4x4 {
-    fn sub_assign(&mut self, other: Matrix4x4) {
+impl SubAssign for Mat4x4 {
+    fn sub_assign(&mut self, other: Mat4x4) {
         for i in 0..4 {
             for j in 0..4 {
                 self.m[i][j] -= other.m[i][j];
@@ -579,13 +579,13 @@ impl SubAssign for Matrix4x4 {
     }
 }
 
-impl MulAssign for Matrix4x4 {
-    fn mul_assign(&mut self, other: Matrix4x4) {
+impl MulAssign for Mat4x4 {
+    fn mul_assign(&mut self, other: Mat4x4) {
         *self = *self * other;
     }
 }
 
-impl MulAssign<f32> for Matrix4x4 {
+impl MulAssign<f32> for Mat4x4 {
     fn mul_assign(&mut self, scalar: f32) {
         for i in 0..4 {
             for j in 0..4 {
@@ -595,7 +595,7 @@ impl MulAssign<f32> for Matrix4x4 {
     }
 }
 
-impl Index<usize> for Matrix4x4 {
+impl Index<usize> for Mat4x4 {
     type Output = [f32; 4];
 
     fn index(&self, index: usize) -> &Self::Output {
@@ -606,7 +606,7 @@ impl Index<usize> for Matrix4x4 {
     }
 }
 
-impl IndexMut<usize> for Matrix4x4 {
+impl IndexMut<usize> for Mat4x4 {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         if index >= 4 {
             panic!("Index out of bounds for Matrix4x4: row {}, but matrix has 4 rows", index);
@@ -615,7 +615,7 @@ impl IndexMut<usize> for Matrix4x4 {
     }
 }
 
-impl fmt::Display for Matrix4x4 {
+impl fmt::Display for Mat4x4 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -628,14 +628,14 @@ impl fmt::Display for Matrix4x4 {
     }
 }
 
-impl From<[[f32; 4]; 4]> for Matrix4x4 {
+impl From<[[f32; 4]; 4]> for Mat4x4 {
     fn from(m: [[f32; 4]; 4]) -> Self {
         Self::new(m)
     }
 }
 
-impl From<Matrix4x4> for [[f32; 4]; 4] {
-    fn from(matrix: Matrix4x4) -> Self {
+impl From<Mat4x4> for [[f32; 4]; 4] {
+    fn from(matrix: Mat4x4) -> Self {
         matrix.m
     }
 }
@@ -650,8 +650,8 @@ mod tests {
 
     #[test]
     fn test_identity() {
-        let id = Matrix4x4::identity();
-        let v = Vector4::new(1.0, 2.0, 3.0, 4.0);
+        let id = Mat4x4::identity();
+        let v = Vec4::new(1.0, 2.0, 3.0, 4.0);
         let result = id * v;
         assert!((result.x - v.x).abs() < EPSILON);
         assert!((result.y - v.y).abs() < EPSILON);
@@ -661,7 +661,7 @@ mod tests {
 
     #[test]
     fn test_transpose() {
-        let m = Matrix4x4::new([
+        let m = Mat4x4::new([
             [1.0, 2.0, 3.0, 4.0],
             [5.0, 6.0, 7.0, 8.0],
             [9.0, 10.0, 11.0, 12.0],
@@ -674,16 +674,16 @@ mod tests {
 
     #[test]
     fn test_determinant() {
-        let id = Matrix4x4::identity();
+        let id = Mat4x4::identity();
         assert!((id.determinant() - 1.0).abs() < EPSILON);
 
-        let scale = Matrix4x4::scaling(2.0, 3.0, 4.0);
+        let scale = Mat4x4::scaling(2.0, 3.0, 4.0);
         assert!((scale.determinant() - 24.0).abs() < EPSILON);
     }
 
     #[test]
     fn test_inverse() {
-        let m = Matrix4x4::scaling(2.0, 3.0, 4.0);
+        let m = Mat4x4::scaling(2.0, 3.0, 4.0);
         let inv = m.inverse().unwrap();
         let result = m * inv;
         assert!(result.is_identity());
@@ -691,8 +691,8 @@ mod tests {
 
     #[test]
     fn test_operators() {
-        let m1 = Matrix4x4::identity();
-        let m2 = Matrix4x4::identity();
+        let m1 = Mat4x4::identity();
+        let m2 = Mat4x4::identity();
 
         let sum = m1 + m2;
         assert!((sum.m[0][0] - 2.0).abs() < EPSILON);
