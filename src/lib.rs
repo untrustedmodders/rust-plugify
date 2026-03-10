@@ -209,3 +209,51 @@ macro_rules! register_plugin {
         $crate::export_symbols!();
     };
 }
+
+/// Base logging macro.
+///
+/// Sends a message to `plugify::log` with an explicit severity.
+/// Automatically attaches the caller source location.
+///
+/// Arguments:
+/// - `$msg`: message string (`&str`)
+/// - `$sev`: `plugify::Severity` level
+///
+/// Example:
+/// ```
+/// log!("physics update", plugify::Severity::Debug);
+/// ```
+/// Base logging macro.
+#[macro_export]
+macro_rules! log {
+    ($msg:expr, $sev:expr) => {
+        plugify::log(
+            plugify::StrView::new($msg),
+            plugify::Severity::$sev,
+            &plugify::Location::new(std::panic::Location::caller()),
+        );
+    };
+}
+
+macro_rules! make_log_macro {
+    ($($name:ident => $sev:ident),*) => {
+        $(
+            #[macro_export]
+            macro_rules! $name {
+                ($msg:expr) => {
+                    $crate::log!($msg, $sev);
+                };
+            }
+        )*
+    }
+}
+
+// Generates trace!, debug!, info!, warning!, error!, and fatal!
+make_log_macro! {
+    trace   => Trace,
+    debug   => Debug,
+    info    => Info,
+    warning => Warning,
+    error   => Error,
+    fatal   => Fatal
+}

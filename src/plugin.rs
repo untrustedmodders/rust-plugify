@@ -1,14 +1,42 @@
 use std::sync::OnceLock;
 use crate::{import_symbol, vector::*, string::*, variant::*};
 
-import_symbol!(get_method_ptr, GET_METHOD_PTR, init_get_method_ptr, (name:*const u8, size:usize) -> usize);
+#[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Severity {
+    Unknown = 0,
+    Trace   = 1,
+    Debug   = 2,
+    Info    = 3,
+    Warning = 4,
+    Error   = 5,
+    Fatal   = 6,
+}
+
+#[repr(C)]
+pub struct StrView {
+    pub data: *const u8,
+    pub size: usize
+}
+
+#[repr(C)]
+pub struct Location {
+    pub line: usize,
+    pub column: usize,
+    pub file_name: StrView,
+    pub function_name: StrView,
+    pub module_name: StrView,
+}
+
+import_symbol!(get_method_ptr, GET_METHOD_PTR, init_get_method_ptr, (name:StrView) -> usize);
 import_symbol!(get_base_dir, GET_BASE_DIR, init_get_base_dir, () -> Str);
 import_symbol!(get_extensions_dir, GET_EXTENSIONS_DIR, init_get_extensions_dir, () -> Str);
 import_symbol!(get_configs_dir, GET_CONFIGS_DIR, init_get_configs_dir, () -> Str);
 import_symbol!(get_data_dir, GET_DATA_DIR, init_get_data_dir, () -> Str);
 import_symbol!(get_logs_dir, GET_LOGS_DIR, init_get_logs_dir, () -> Str);
 import_symbol!(get_cache_dir, GET_CACHE_DIR, init_get_cache_dir, () -> Str);
-import_symbol!(is_extension_loaded, IS_EXTENSION_LOADED, init_is_extension_loaded, (name:*const u8, nsize:usize, constraint:*const u8, csize:usize) -> bool);
+import_symbol!(is_extension_loaded, IS_EXTENSION_LOADED, init_is_extension_loaded, (name:StrView, constraint:StrView) -> bool);
+import_symbol!(log, LOG, init_log, (message:StrView, severity:Severity, location: &Location) -> ());
 
 import_symbol!(get_plugin_id, GET_PLUGIN_ID, init_get_plugin_id, (handle:PluginHandle) -> isize);
 import_symbol!(get_plugin_name, GET_PLUGIN_NAME, init_get_plugin_name, (handle:PluginHandle) -> Str);
@@ -116,6 +144,7 @@ pub extern "C" fn plugify_init(
     init_get_logs_dir(api[i]); i += 1;
     init_get_cache_dir(api[i]); i += 1;
     init_is_extension_loaded(api[i]); i += 1;
+    init_log(api[i]); i += 1;
 
     init_get_plugin_id(api[i]); i += 1;
     init_get_plugin_name(api[i]); i += 1;
@@ -302,4 +331,25 @@ pub extern "C" fn plugify_plugin_end() {
 #[unsafe(no_mangle)]
 pub extern "C" fn plugify_plugin_context() -> *const PluginContext {
     CONTEXT.get().expect("CONTEXT not initialized")
+}
+
+impl StrView {
+    pub fn new(val: &str) -> Self {
+        Self {
+            data: val.as_ptr(),
+            size: val.len(),
+        }
+    }
+}
+
+impl Location {
+    pub fn new(location: &std::panic::Location) -> Self {
+        Self {
+            line: location.line() as usize,
+            column: location.column() as usize,
+            file_name: StrView::new(location.file()),
+            function_name: StrView::new("?"),
+            module_name: StrView::new(PLUGIN.get().expect("PLUGIN not initialized").name.as_str()),
+        }
+    }
 }
