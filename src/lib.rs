@@ -257,7 +257,3 @@ make_log_macro! {
     error   => Error,
     fatal   => Fatal
 }
-
-fn m() {
-    trace!("s");
-}
