@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.4](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.3.3...plugify-v1.3.4) (2026-03-10)
+
+
+### Bug Fixes
+
+* another log rework ([a07b863](https://github.com/untrustedmodders/rust-plugify/commit/a07b8633adc29966cf3834dd8de03f96ee503a0c))
+
 ## [1.3.3](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.3.2...plugify-v1.3.3) (2026-03-10)
 
 
