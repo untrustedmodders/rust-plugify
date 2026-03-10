@@ -224,36 +224,57 @@ macro_rules! register_plugin {
 /// log!("physics update", plugify::Severity::Debug);
 /// ```
 /// Base logging macro.
+///
 #[macro_export]
 macro_rules! log {
-    ($msg:expr, $sev:ident) => {
+    ($severity:expr, $msg:expr) => {
         crate::log(
             crate::StrView::new($msg),
-            crate::Severity::$sev,
+            $severity,
             &crate::Location::new(std::panic::Location::caller()),
-        );
+        )
+    };
+    ($severity:expr, $fmt:expr, $($arg:tt)*) => {
+        crate::log(
+            crate::StrView::new(&format!($fmt, $($arg)*)),
+            $severity,
+            &crate::Location::new(std::panic::Location::caller()),
+        )
     };
 }
 
-macro_rules! make_log_macro {
-    ($($name:ident => $sev:ident),*) => {
-        $(
-            #[macro_export]
-            macro_rules! $name {
-                ($msg:expr) => {
-                    $crate::log!($msg, $sev);
-                };
-            }
-        )*
-    }
+#[macro_export]
+macro_rules! trace {
+    ($msg:expr) => { log!(crate::Severity::Trace, $msg); };
+    ($fmt:expr, $($arg:tt)*) => { log!(crate::Severity::Trace, $fmt, $($arg)*); };
 }
 
-// Generates trace!, debug!, info!, warning!, error!, and fatal!
-make_log_macro! {
-    trace   => Trace,
-    debug   => Debug,
-    info    => Info,
-    warning => Warning,
-    error   => Error,
-    fatal   => Fatal
+#[macro_export]
+macro_rules! debug {
+    ($msg:expr) => { log!(crate::Severity::Debug, $msg); };
+    ($fmt:expr, $($arg:tt)*) => { log!(crate::Severity::Debug, $fmt, $($arg)*); };
+}
+
+#[macro_export]
+macro_rules! info {
+    ($msg:expr) => { log!(crate::Severity::Info, $msg); };
+    ($fmt:expr, $($arg:tt)*) => { log!(crate::Severity::Info, $fmt, $($arg)*); };
+}
+
+#[macro_export]
+macro_rules! warning {
+    ($msg:expr) => { log!(crate::Severity::Warning, $msg); };
+    ($fmt:expr, $($arg:tt)*) => { log!(crate::Severity::Warning, $fmt, $($arg)*); };
+}
+
+#[macro_export]
+macro_rules! error {
+    ($msg:expr) => { log!(crate::Severity::Error, $msg); };
+    ($fmt:expr, $($arg:tt)*) => { log!(crate::Severity::Error, $fmt, $($arg)*); };
+}
+
+#[macro_export]
+macro_rules! fatal {
+    ($msg:expr) => { log!(crate::Severity::Fatal, $msg); };
+    ($fmt:expr, $($arg:tt)*) => { log!(crate::Severity::Fatal, $fmt, $($arg)*); };
 }
