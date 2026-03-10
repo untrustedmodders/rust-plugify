@@ -228,53 +228,53 @@ macro_rules! register_plugin {
 #[macro_export]
 macro_rules! log {
     ($severity:expr, $msg:expr) => {
-        crate::log(
-            crate::StrView::new($msg),
+        plugify::log(
+            plugify::StrView::new($msg),
             $severity,
-            &crate::Location::new(std::panic::Location::caller()),
+            &plugify::Location::new(std::panic::Location::caller()),
         )
     };
     ($severity:expr, $fmt:expr, $($arg:tt)*) => {
-        crate::log(
-            crate::StrView::new(&format!($fmt, $($arg)*)),
+        plugify::log(
+            plugify::StrView::new(&format!($fmt, $($arg)*)),
             $severity,
-            &crate::Location::new(std::panic::Location::caller()),
+            &plugify::Location::new(std::panic::Location::caller()),
         )
     };
 }
 
 #[macro_export]
 macro_rules! trace {
-    ($msg:expr) => { log!(crate::Severity::Trace, $msg); };
-    ($fmt:expr, $($arg:tt)*) => { log!(crate::Severity::Trace, $fmt, $($arg)*); };
+    ($msg:expr) => { plugify::log!(plugify::Severity::Trace, $msg); };
+    ($fmt:expr, $($arg:tt)*) => { plugify::log!(plugify::Severity::Trace, $fmt, $($arg)*); };
 }
 
 #[macro_export]
 macro_rules! debug {
-    ($msg:expr) => { log!(crate::Severity::Debug, $msg); };
-    ($fmt:expr, $($arg:tt)*) => { log!(crate::Severity::Debug, $fmt, $($arg)*); };
+    ($msg:expr) => { plugify::log!(plugify::Severity::Debug, $msg); };
+    ($fmt:expr, $($arg:tt)*) => { plugify::log!(plugify::Severity::Debug, $fmt, $($arg)*); };
 }
 
 #[macro_export]
 macro_rules! info {
-    ($msg:expr) => { log!(crate::Severity::Info, $msg); };
-    ($fmt:expr, $($arg:tt)*) => { log!(crate::Severity::Info, $fmt, $($arg)*); };
+    ($msg:expr) => { plugify::log!(plugify::Severity::Info, $msg); };
+    ($fmt:expr, $($arg:tt)*) => { plugify::log!(plugify::Severity::Info, $fmt, $($arg)*); };
 }
 
 #[macro_export]
 macro_rules! warning {
-    ($msg:expr) => { log!(crate::Severity::Warning, $msg); };
-    ($fmt:expr, $($arg:tt)*) => { log!(crate::Severity::Warning, $fmt, $($arg)*); };
+    ($msg:expr) => { plugify::log!(plugify::Severity::Warning, $msg); };
+    ($fmt:expr, $($arg:tt)*) => { plugify::log!(plugify::Severity::Warning, $fmt, $($arg)*); };
 }
 
 #[macro_export]
 macro_rules! error {
-    ($msg:expr) => { log!(crate::Severity::Error, $msg); };
-    ($fmt:expr, $($arg:tt)*) => { log!(crate::Severity::Error, $fmt, $($arg)*); };
+    ($msg:expr) => { plugify::log!(plugify::Severity::Error, $msg); };
+    ($fmt:expr, $($arg:tt)*) => { plugify::log!(plugify::Severity::Error, $fmt, $($arg)*); };
 }
 
 #[macro_export]
 macro_rules! fatal {
-    ($msg:expr) => { log!(crate::Severity::Fatal, $msg); };
-    ($fmt:expr, $($arg:tt)*) => { log!(crate::Severity::Fatal, $fmt, $($arg)*); };
+    ($msg:expr) => { plugify::log!(plugify::Severity::Fatal, $msg); };
+    ($fmt:expr, $($arg:tt)*) => { plugify::log!(plugify::Severity::Fatal, $fmt, $($arg)*); };
 }
