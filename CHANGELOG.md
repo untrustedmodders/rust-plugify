@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.3.1...plugify-v1.3.2) (2026-03-10)
+
+
+### Bug Fixes
+
+* remove unused ([d4127bf](https://github.com/untrustedmodders/rust-plugify/commit/d4127bf6e1f5c261a3d4cc814d1bd6259652df96))
+
 ## [1.3.1](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.3.0...plugify-v1.3.1) (2026-03-10)
 
 
