@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.3.0...plugify-v1.3.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* rework log macro ([900e40b](https://github.com/untrustedmodders/rust-plugify/commit/900e40bbeecc3be2fa02e59680598315639b4261))
+
 ## [1.3.0](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.2.1...plugify-v1.3.0) (2026-03-10)
 
 
