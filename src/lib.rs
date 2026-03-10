@@ -231,25 +231,33 @@ macro_rules! log {
             crate::StrView::new($msg),
             crate::Severity::$sev,
             &crate::Location::new(std::panic::Location::caller()),
-        )
+        );
     };
 }
 
-#[macro_export]
 macro_rules! make_log_macro {
-    ($name:ident, $sev:ident) => {
-        #[macro_export]
-        macro_rules! $name {
-            ($msg:expr) => {
-                $crate::log!($msg, $sev);
-            };
-        }
-    };
+    ($($name:ident => $sev:ident),*) => {
+        $(
+            #[macro_export]
+            macro_rules! $name {
+                ($msg:expr) => {
+                    $crate::log!($msg, $sev);
+                };
+            }
+        )*
+    }
 }
 
-make_log_macro!(trace, Trace);
-make_log_macro!(debug, Debug);
-make_log_macro!(info, Info);
-make_log_macro!(warning, Warning);
-make_log_macro!(error, Error);
-make_log_macro!(fatal, Fatal);
+// Generates trace!, debug!, info!, warning!, error!, and fatal!
+make_log_macro! {
+    trace   => Trace,
+    debug   => Debug,
+    info    => Info,
+    warning => Warning,
+    error   => Error,
+    fatal   => Fatal
+}
+
+fn m() {
+    trace!("s");
+}
