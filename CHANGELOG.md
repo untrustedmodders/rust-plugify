@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.2.1...plugify-v1.3.0) (2026-03-10)
+
+
+### Features
+
+* add logger ([778e43a](https://github.com/untrustedmodders/rust-plugify/commit/778e43a23f7c98a1730f455411382ea91f604844))
+
+
+### Bug Fixes
+
+* typo in logger ([21da03d](https://github.com/untrustedmodders/rust-plugify/commit/21da03d14b9865321942ff5535c576e033078809))
+
 ## [1.2.1](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.2.0...plugify-v1.2.1) (2025-12-15)
 
 
