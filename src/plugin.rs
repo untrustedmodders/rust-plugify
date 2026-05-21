@@ -35,8 +35,10 @@ import_symbol!(get_configs_dir, GET_CONFIGS_DIR, init_get_configs_dir, () -> Str
 import_symbol!(get_data_dir, GET_DATA_DIR, init_get_data_dir, () -> Str);
 import_symbol!(get_logs_dir, GET_LOGS_DIR, init_get_logs_dir, () -> Str);
 import_symbol!(get_cache_dir, GET_CACHE_DIR, init_get_cache_dir, () -> Str);
-import_symbol!(is_extension_loaded, IS_EXTENSION_LOADED, init_is_extension_loaded, (name:StrView, constraint:StrView) -> bool);
+import_symbol!(is_loaded, IS_LOADED, init_is_loaded, (name:StrView, constraint:StrView) -> bool);
 import_symbol!(log, LOG, init_log, (message:StrView, severity:Severity, location: &Location) -> ());
+import_symbol!(begin_zone, BEGIN_ZONE, init_begin_zone, (name:StrView, location: &Location) -> u64);
+import_symbol!(end_zone, END_ZONE, init_end_zone, (handle:u64) -> ());
 
 import_symbol!(get_plugin_id, GET_PLUGIN_ID, init_get_plugin_id, (handle:PluginHandle) -> isize);
 import_symbol!(get_plugin_name, GET_PLUGIN_NAME, init_get_plugin_name, (handle:PluginHandle) -> Str);
@@ -143,8 +145,10 @@ pub extern "C" fn plugify_init(
     init_get_data_dir(api[i]); i += 1;
     init_get_logs_dir(api[i]); i += 1;
     init_get_cache_dir(api[i]); i += 1;
-    init_is_extension_loaded(api[i]); i += 1;
+    init_is_loaded(api[i]); i += 1;
     init_log(api[i]); i += 1;
+    init_begin_zone(api[i]); i += 1;
+    init_end_zone(api[i]); i += 1;
 
     init_get_plugin_id(api[i]); i += 1;
     init_get_plugin_name(api[i]); i += 1;
@@ -351,5 +355,27 @@ impl Location {
             function_name: StrView::new("?"),
             module_name: StrView::new(PLUGIN.get().expect("PLUGIN not initialized").name.as_str()),
         }
+    }
+}
+
+pub struct Scope {
+    handle: u64,
+}
+
+impl Scope {
+    pub fn new(
+        name: &str,
+        location: &std::panic::Location,
+    ) -> Self {
+        let loc = Location::new(location);
+        let handle = begin_zone(StrView::new(name), &loc);
+        log(StrView::new(name), Severity::Trace, &loc);
+        Self { handle }
+    }
+}
+
+impl Drop for Scope {
+    fn drop(&mut self) {
+        end_zone(self.handle);
     }
 }

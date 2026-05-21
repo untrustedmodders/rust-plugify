@@ -216,12 +216,12 @@ macro_rules! register_plugin {
 /// Automatically attaches the caller source location.
 ///
 /// Arguments:
-/// - `$msg`: message string (`&str`)
 /// - `$sev`: `plugify::Severity` level
+/// - `$msg`: message string (`&str`)
 ///
 /// Example:
 /// ```
-/// log!("physics update", plugify::Severity::Debug);
+/// log!(plugify::Severity::Debug, "physics update");
 /// ```
 /// Base logging macro.
 ///
@@ -277,4 +277,16 @@ macro_rules! error {
 macro_rules! fatal {
     ($msg:expr) => { plugify::log!(plugify::Severity::Fatal, $msg); };
     ($fmt:expr, $($arg:tt)*) => { plugify::log!(plugify::Severity::Fatal, $fmt, $($arg)*); };
+}
+
+#[macro_export]
+macro_rules! scope {
+    ($name:expr) => {{
+        let scope = plugify::Scope::new($name, std::panic::Location::caller());
+        scope
+    }};
+    ($fmt:expr, $($arg:tt)*) => {{
+        let scope = plugify::Scope::new(format!($fmt, $($arg)*), std::panic::Location::caller());
+        scope
+    }};
 }
