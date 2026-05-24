@@ -44,7 +44,7 @@ pub use plugin::*;
 macro_rules! export_symbols {
     () => {
         unsafe extern "C" {
-            fn plugify_init() -> *const ();
+            fn plugify_plugin_init() -> *const ();
             fn plugify_plugin_start() -> *const ();
             fn plugify_plugin_update() -> *const ();
             fn plugify_plugin_end() -> *const ();
@@ -52,7 +52,7 @@ macro_rules! export_symbols {
         }
 
         #[used]
-        static PLUGIFY_INIT_REF: unsafe extern "C" fn() -> *const () = plugify_init;
+        static PLUGIFY_PLUGIN_INIT_REF: unsafe extern "C" fn() -> *const () = plugify_plugin_init;
 
         #[used]
         static PLUGIFY_PLUGIN_START_REF: unsafe extern "C" fn() -> *const () = plugify_plugin_start;
@@ -91,7 +91,7 @@ macro_rules! export_symbols {
 ///     (message: *const u8, len: usize) -> ()
 /// );
 ///
-/// // In plugify_init:
+/// // In plugify_plugin_init:
 /// fn setup(api: &[usize]) {
 ///     init_log_message(api[0]);
 /// }
@@ -136,7 +136,7 @@ macro_rules! import_symbol {
 
 /// Register plugin lifecycle callbacks with the host.
 ///
-/// Generates an exported `plugify_main()` function that the host calls to register
+/// Generates an exported `plugify_plugin_main()` function that the host calls to register
 /// your plugin's callbacks. Automatically calls `export_symbols!()`.
 ///
 /// All callbacks are optional - register any combination you need.
@@ -194,7 +194,7 @@ macro_rules! register_plugin {
         $(end: $end:expr$(,)?)?
     ) => {
         #[unsafe(no_mangle)]
-        pub extern "C" fn plugify_main() {
+        pub extern "C" fn plugify_plugin_main() {
             $(
                 $crate::on_plugin_start($start);
             )?

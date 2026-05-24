@@ -1,4 +1,6 @@
 use std::sync::OnceLock;
+use std::panic::Location;
+use std::error::Error;
 use crate::{import_symbol, vector::*, string::*, variant::*};
 
 #[repr(C)]
@@ -20,7 +22,7 @@ pub struct StrView {
 }
 
 #[repr(C)]
-pub struct Location {
+pub struct SourceLocation {
     pub line: usize,
     pub column: usize,
     pub file_name: StrView,
@@ -36,8 +38,8 @@ import_symbol!(get_data_dir, GET_DATA_DIR, init_get_data_dir, () -> Str);
 import_symbol!(get_logs_dir, GET_LOGS_DIR, init_get_logs_dir, () -> Str);
 import_symbol!(get_cache_dir, GET_CACHE_DIR, init_get_cache_dir, () -> Str);
 import_symbol!(is_loaded, IS_LOADED, init_is_loaded, (name:StrView, constraint:StrView) -> bool);
-import_symbol!(log, LOG, init_log, (message:StrView, severity:Severity, location: &Location) -> ());
-import_symbol!(begin_zone, BEGIN_ZONE, init_begin_zone, (name:StrView, location: &Location) -> u64);
+import_symbol!(log, LOG, init_log, (message:StrView, severity:Severity, location: &SourceLocation) -> ());
+import_symbol!(begin_zone, BEGIN_ZONE, init_begin_zone, (name:StrView, location: &SourceLocation) -> u64);
 import_symbol!(end_zone, END_ZONE, init_end_zone, (handle:u64) -> ());
 
 import_symbol!(get_plugin_id, GET_PLUGIN_ID, init_get_plugin_id, (handle:PluginHandle) -> isize);
@@ -51,7 +53,7 @@ import_symbol!(get_plugin_location, GET_PLUGIN_LOCATION, init_get_plugin_locatio
 import_symbol!(get_plugin_dependencies, GET_PLUGIN_DEPENDENCIES, init_get_plugin_dependencies, (handle:PluginHandle) -> Arr<Str>);
 
 // Constants
-const K_API_VERSION: i32 = 1;
+const K_API_VERSION: i32 = 3;
 
 // Plugin handle type
 type PluginHandle = usize;
@@ -73,6 +75,20 @@ pub struct PluginInfo {
 }
 
 #[repr(C)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum PluginCode {
+    Ok = 0,
+    Failed = 1,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct PluginResult {
+    code: PluginCode,
+    message: Str,
+}
+
+#[repr(C)]
 #[derive(Debug)]
 pub struct PluginContext {
     has_update: bool,
@@ -82,9 +98,9 @@ pub struct PluginContext {
 
 #[derive(Debug)]
 pub struct PluginCallbacks {
-    pub update_callback: OnceLock<fn(f32)>,
-    pub start_callback: OnceLock<fn()>,
-    pub end_callback: OnceLock<fn()>,
+    pub update_callback: OnceLock<fn(f32) -> Result<(), Box<dyn Error>>>,
+    pub start_callback: OnceLock<fn() -> Result<(), Box<dyn Error>>>,
+    pub end_callback: OnceLock<fn() -> Result<(), Box<dyn Error>>>,
 }
 
 impl PluginCallbacks {
@@ -109,23 +125,23 @@ pub static HANDLE: OnceLock<PluginHandle> = OnceLock::new();
 pub static CONTEXT: OnceLock<PluginContext> = OnceLock::new();
 pub static CALLBACKS: OnceLock<PluginCallbacks> = OnceLock::new();
 
-pub fn on_plugin_start(func: fn()) {
+pub fn on_plugin_start(func: fn() -> Result<(), Box<dyn Error>>) {
     let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::new());
     let _ = callbacks.start_callback.set(func);
 }
 
-pub fn on_plugin_update(func: fn(f32)) {
+pub fn on_plugin_update(func: fn(f32) -> Result<(), Box<dyn Error>>) {
     let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::new());
     let _ = callbacks.update_callback.set(func);
 }
 
-pub fn on_plugin_end(func: fn()) {
+pub fn on_plugin_end(func: fn() -> Result<(), Box<dyn Error>>) {
     let callbacks = CALLBACKS.get_or_init(||PluginCallbacks::new());
     let _ = callbacks.end_callback.set(func);
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn plugify_init(
+pub extern "C" fn plugify_plugin_init(
     data: *const usize,
     len: usize,
     version: i32,
@@ -311,25 +327,38 @@ pub extern "C" fn plugify_init(
     0
 }
 
+fn result(result: Result<(), Box<dyn Error>>) -> PluginResult {
+    match result {
+        Ok(()) => PluginResult {
+            code: PluginCode::Ok,
+            message: Str::new(),
+        },
+        Err(error) => PluginResult {
+            code: PluginCode::Failed,
+            message: Str::from_str(error.to_string().as_str()),
+        }
+    }
+}
+
 #[unsafe(no_mangle)]
-pub extern "C" fn plugify_plugin_start() {
+pub extern "C" fn plugify_plugin_start() -> PluginResult {
     let callbacks = CALLBACKS.get().expect("CALLBACKS not initialized");
     let callback = callbacks.start_callback.get().expect("start_callback not initialized");
-    callback();
+    result(callback())
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn plugify_plugin_update(dt: f32) {
+pub extern "C" fn plugify_plugin_update(dt: f32) -> PluginResult {
     let callbacks = CALLBACKS.get().expect("CALLBACKS not initialized");
     let callback = callbacks.update_callback.get().expect("update_callback not initialized");
-    callback(dt);
+    result(callback(dt))
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn plugify_plugin_end() {
+pub extern "C" fn plugify_plugin_end() -> PluginResult {
     let callbacks = CALLBACKS.get().expect("CALLBACKS not initialized");
     let callback = callbacks.end_callback.get().expect("end_callback not initialized");
-    callback();
+    result(callback())
 }
 
 #[unsafe(no_mangle)]
@@ -346,8 +375,8 @@ impl StrView {
     }
 }
 
-impl Location {
-    pub fn new(location: &std::panic::Location) -> Self {
+impl SourceLocation {
+    pub fn new(location: &Location) -> Self {
         Self {
             line: location.line() as usize,
             column: location.column() as usize,
@@ -365,9 +394,9 @@ pub struct Scope {
 impl Scope {
     pub fn new(
         name: &str,
-        location: &std::panic::Location,
+        location: &Location,
     ) -> Self {
-        let loc = Location::new(location);
+        let loc = SourceLocation::new(location);
         let handle = begin_zone(StrView::new(name), &loc);
         log(StrView::new(name), Severity::Trace, &loc);
         Self { handle }
