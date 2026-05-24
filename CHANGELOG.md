@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.4.0...plugify-v1.4.1) (2026-05-24)
+
+
+### Bug Fixes
+
+* typo in macro ([90be143](https://github.com/untrustedmodders/rust-plugify/commit/90be14327b939264379dd847e662349ef01ff432))
+
 ## [1.4.0](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.3.4...plugify-v1.4.0) (2026-05-24)
 
 
