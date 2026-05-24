@@ -231,14 +231,14 @@ macro_rules! log {
         plugify::log(
             plugify::StrView::new($msg),
             $severity,
-            &plugify::Location::new(std::panic::Location::caller()),
+            &plugify::SourceLocation::new(std::panic::Location::caller()),
         )
     };
     ($severity:expr, $fmt:expr, $($arg:tt)*) => {
         plugify::log(
             plugify::StrView::new(&format!($fmt, $($arg)*)),
             $severity,
-            &plugify::Location::new(std::panic::Location::caller()),
+            &plugify::SourceLocation::new(std::panic::Location::caller()),
         )
     };
 }
