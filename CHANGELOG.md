@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.3.4...plugify-v1.4.0) (2026-05-24)
+
+
+### Features
+
+* add error handling ([92bcfba](https://github.com/untrustedmodders/rust-plugify/commit/92bcfbace175c0e099c12f07efedcfc4b47c5d91))
+
+
+### Bug Fixes
+
+* add profiler ([9a1e3f0](https://github.com/untrustedmodders/rust-plugify/commit/9a1e3f00751eafa2d21d6161564d27897e0fdd0b))
+
 ## [1.3.4](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.3.3...plugify-v1.3.4) (2026-03-10)
 
 
