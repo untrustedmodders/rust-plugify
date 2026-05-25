@@ -405,6 +405,8 @@ impl Scope {
 
 impl Drop for Scope {
     fn drop(&mut self) {
-        end_zone(self.handle);
+        if self.handle != 0 {
+            end_zone(self.handle);
+        }
     }
 }
