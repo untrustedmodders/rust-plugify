@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.4.1...plugify-v1.4.2) (2026-05-25)
+
+
+### Bug Fixes
+
+* add handle check for zone ([28db5c0](https://github.com/untrustedmodders/rust-plugify/commit/28db5c066b5bfa5b7fe7cc3670ec2ac48152b86e))
+
 ## [1.4.1](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.4.0...plugify-v1.4.1) (2026-05-24)
 
 
