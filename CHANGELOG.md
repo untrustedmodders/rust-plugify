@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.3](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.4.2...plugify-v1.4.3) (2026-06-20)
+
+
+### Bug Fixes
+
+* make api as public ([5f7d5f4](https://github.com/untrustedmodders/rust-plugify/commit/5f7d5f4f2821dd3e47a4254d2bfe1db6ec08c9aa))
+
 ## [1.4.2](https://github.com/untrustedmodders/rust-plugify/compare/plugify-v1.4.1...plugify-v1.4.2) (2026-05-25)
 
 
