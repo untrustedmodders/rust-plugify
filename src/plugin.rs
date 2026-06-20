@@ -53,7 +53,7 @@ import_symbol!(get_plugin_location, GET_PLUGIN_LOCATION, init_get_plugin_locatio
 import_symbol!(get_plugin_dependencies, GET_PLUGIN_DEPENDENCIES, init_get_plugin_dependencies, (handle:PluginHandle) -> Arr<Str>);
 
 // Constants
-const K_API_VERSION: i32 = 3;
+pub const API_VERSION: i32 = 3;
 
 // Plugin handle type
 type PluginHandle = usize;
@@ -147,8 +147,8 @@ pub extern "C" fn plugify_plugin_init(
     version: i32,
     handle: usize,
 ) -> i32 {
-    if version < K_API_VERSION {
-        return K_API_VERSION;
+    if version < API_VERSION {
+        return API_VERSION;
     }
 
     let api = unsafe { std::slice::from_raw_parts(data, len) };
